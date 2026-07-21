@@ -23,6 +23,7 @@ const defaultState = {
     memories: []
   },
   coach: { memories: [], insights: [] },
+  insights: [],
   decisions: { current: null, history: [], logs: [] },
   events: []
 }
@@ -55,6 +56,7 @@ function loadState() {
         }
       },
       coach: { ...defaultState.coach, ...(saved.coach || {}) },
+      insights: saved.insights || saved.coach?.insights || defaultState.insights,
       decisions: { ...defaultState.decisions, ...(saved.decisions || {}) },
       goalPlans: { ...defaultState.goalPlans, ...(saved.goalPlans || {}) }
     }

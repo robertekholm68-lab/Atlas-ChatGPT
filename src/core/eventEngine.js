@@ -3,6 +3,7 @@ import { applyWorkoutToRecovery, recoveryScore } from './recoveryEngine'
 import { evaluateAtlasDecisions } from './decisionEngine'
 import { evaluateGoalPlan, normalizeGoal } from './goalEngine'
 import { refreshAtlasMemory } from './memoryEngine'
+import { refreshAtlasInsights } from './insightEngine'
 
 export const ATLAS_EVENTS = {
   WORKOUT_FINISHED: 'workout.finished',
@@ -38,6 +39,10 @@ function workoutTimestamp(workout) {
   if (workout.completedAt) return new Date(workout.completedAt).getTime()
   if (workout.date) return new Date(`${workout.date}T18:00:00`).getTime()
   return Date.now()
+}
+
+function refreshDerivedTrainingState(state) {
+  return refreshAtlasInsights(refreshAtlasMemory(state))
 }
 
 function attachDecisions(state, context) {
@@ -76,13 +81,13 @@ export function dispatchAtlasEvent(type, payload = {}) {
         updatedAt: event.createdAt
       }
     }
-    next = refreshAtlasMemory(next)
+    next = refreshDerivedTrainingState(next)
     next = attachDecisions(next, { trigger: type, workout })
   }
 
   if (type === ATLAS_EVENTS.PROFILE_UPDATED) {
     next = { ...next, profile: { ...(current.profile || {}), ...payload } }
-    next = refreshAtlasMemory(next)
+    next = refreshDerivedTrainingState(next)
     next = attachDecisions(next, { trigger: type })
   }
 
@@ -102,6 +107,7 @@ export function dispatchAtlasEvent(type, payload = {}) {
         history: [plan, ...(current.goalPlans?.history || [])].slice(0, 100)
       }
     }
+    next = refreshAtlasInsights(next)
     next = attachDecisions(next, { trigger: type, goal, goalPlan: plan })
   }
 
