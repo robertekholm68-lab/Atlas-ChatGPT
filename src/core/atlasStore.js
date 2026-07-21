@@ -7,6 +7,11 @@ const defaultState = {
   goalPlans: { active: null, history: [] },
   workouts: [],
   recovery: { muscles: {}, score: 100, updatedAt: null },
+  predictions: {
+    generatedAt: null,
+    items: [],
+    scenarios: []
+  },
   memory: {
     generatedAt: null,
     trainingPattern: {
@@ -46,6 +51,7 @@ function loadState() {
       ...saved,
       version: defaultState.version,
       recovery: { ...defaultState.recovery, ...(saved.recovery || {}) },
+      predictions: { ...defaultState.predictions, ...(saved.predictions || {}) },
       memory: {
         ...defaultState.memory,
         ...(saved.memory || {}),
