@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Bot, Dumbbell, HeartPulse } from 'lucide-react'
+import { Bot, Bug, Dumbbell, HeartPulse } from 'lucide-react'
 import AppPhase4 from './AppPhase4'
 import AppIntelligence from './AppIntelligence'
+import AtlasDevPanel from './AtlasDevPanel'
 import { getAtlasState, subscribeAtlas } from './core/atlasStore'
 import { recordCompletedWorkout } from './core/eventEngine'
 import { installPhase4Bridge } from './core/phase4Bridge'
@@ -29,6 +30,7 @@ function importLegacyWorkouts() {
 export default function AppAtlas() {
   const [module, setModule] = useState(loadModule)
   const [core, setCore] = useState(getAtlasState)
+  const [showDevPanel, setShowDevPanel] = useState(false)
 
   useEffect(() => {
     importLegacyWorkouts()
@@ -51,6 +53,7 @@ export default function AppAtlas() {
   }
 
   const recovery = core.recovery?.score ?? 100
+  const currentDecision = core.decisions?.current
 
   return (
     <div className="atlas-product-shell">
@@ -71,13 +74,24 @@ export default function AppAtlas() {
           <Bot size={18} />
           <span>Coach</span>
         </button>
-        <span className="atlas-core-status" title="Beräknas lokalt från genomförda set och RPE">
+        <span className="atlas-core-status" title={currentDecision?.title || 'Beräknas lokalt från genomförda set och RPE'}>
           <HeartPulse size={16} />
           Återhämtning {recovery}%
         </span>
+        <button
+          type="button"
+          className={`atlas-dev-toggle ${showDevPanel ? 'active' : ''}`}
+          onClick={() => setShowDevPanel(value => !value)}
+          title="Öppna intern ATLAS-diagnostik"
+          aria-pressed={showDevPanel}
+        >
+          <Bug size={17}/>
+          <span>Core</span>
+        </button>
       </div>
 
       {module === 'training' ? <AppPhase4 /> : <AppIntelligence />}
+      {showDevPanel && <AtlasDevPanel core={core} onClose={() => setShowDevPanel(false)}/>} 
     </div>
   )
 }
