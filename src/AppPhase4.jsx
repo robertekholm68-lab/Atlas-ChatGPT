@@ -1,10 +1,11 @@
 import './phase4.css'
+import { ActionButton, BottomNavigation, Card, ExerciseRow, ProgressRing, SectionTitle as AtlasSectionTitle, StatCard, WorkoutCard } from './atlasDesignSystem'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Activity, Archive, ArrowDown, ArrowUp, BarChart3, CalendarDays, Check,
+  Activity, Apple, Archive, ArrowDown, ArrowUp, BarChart3, CalendarDays, Check,
   ChevronRight, Clipboard, Copy, Download, Dumbbell, FileUp, Flame, GripVertical,
-  HeartPulse, History, Library, ListFilter, MoreHorizontal, Pencil, Play, Plus,
-  QrCode, Search, Share2, Sparkles, Star, Target, Trash2, Trophy, Upload, X
+  HeartPulse, History, Library, Moon, ListFilter, MoreHorizontal, Pencil, Play, Plus,
+  QrCode, Search, Share2, Sparkles, Star, Target, Trash2, Utensils, Trophy, Upload, X
 } from 'lucide-react'
 
 const exerciseBank = [
@@ -88,9 +89,9 @@ export default function AppPhase4(){
     const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(data.programs)setPrograms(data.programs);if(data.history)setHistory(data.history);notify('Data importerad')}catch{notify('Filen kunde inte läsas')}};reader.readAsText(file)
   }
 
-  const nav=[['dashboard','Översikt',Activity],['programs','Program',Library],['exercises','Övningar',Dumbbell],['calendar','Kalender',CalendarDays],['history','Historik',History],['stats','Statistik',BarChart3]]
+  const nav=[['dashboard','Home',Activity],['programs','Program',Library],['session','Workout',Dumbbell],['food','Food',Utensils],['progress','Progress',BarChart3],['recovery','Recovery',HeartPulse],['coach','Coach',Bot]]
   return <div className="p4-shell">
-    <aside className="p4-sidebar"><div className="p4-brand"><span>A</span><div><strong>ATLAS</strong><small>INTELLIGENT TRAINING</small></div></div><nav>{nav.map(([id,label,Icon])=><button key={id} className={page===id?'active':''} onClick={()=>setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav><div className="p4-side-tools"><button onClick={exportData}><Download size={17}/>Exportera</button><button onClick={()=>fileInput.current?.click()}><Upload size={17}/>Importera</button><input ref={fileInput} type="file" accept="application/json" hidden onChange={importData}/></div></aside>
+    <aside className="p4-sidebar"><div className="p4-brand"><span>A</span><div><strong>ATLAS</strong><small>INTELLIGENT TRAINING</small></div></div><nav>{nav.map(([id,label,Icon])=><button key={id} className={page===id?'active':''} onClick={()=> id==='session' && !session ? setPage('programs') : setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav><div className="p4-side-tools"><button onClick={exportData}><Download size={17}/>Exportera</button><button onClick={()=>fileInput.current?.click()}><Upload size={17}/>Importera</button><input ref={fileInput} type="file" accept="application/json" hidden onChange={importData}/></div></aside>
     <main className="p4-main"><header className="p4-top"><div><span className="eyebrow">Fas 4</span><h1>{titleFor(page)}</h1><p>{subtitleFor(page)}</p></div><div><button className="p4-icon" onClick={()=>setModal('share')}><Share2 size={19}/></button><button className="p4-primary" onClick={()=>setModal('new-program')}><Plus size={18}/>Nytt program</button></div></header>
       {page==='dashboard'&&<Dashboard programs={programs} history={history} startProgram={startProgram} setPage={setPage}/>} 
       {page==='programs'&&<ProgramLibrary programs={programs} setPrograms={setPrograms} activeProgramId={activeProgramId} setActiveProgramId={setActiveProgramId} startProgram={startProgram} notify={notify}/>} 
@@ -98,7 +99,13 @@ export default function AppPhase4(){
       {page==='calendar'&&<CalendarView history={history}/>} 
       {page==='history'&&<HistoryView history={history}/>} 
       {page==='stats'&&<StatsView history={history}/>} 
-      {page==='session'&&session&&<LiveSession session={session} setSession={setSession} finishSession={finishSession}/>} 
+      {page==='food'&&<FoodView notify={notify}/>}
+      {page==='progress'&&<StatsView history={history}/>}
+      {page==='recovery'&&<RecoveryView/>}
+      {page==='coach'&&<CoachView notify={notify}/>}
+      {page==='session'&&session&&<LiveSession session={session} setSession={setSession} finishSession={finishSession}/>}
+      {page==='session'&&!session&&<WorkoutLanding programs={programs} startProgram={startProgram}/>}
+      <BottomNavigation items={nav} active={page} onChange={id=> id==='session' && !session ? setPage('programs') : setPage(id)} />
     </main>
     {modal==='new-program'&&<NewProgramModal onClose={()=>setModal(null)} onCreate={p=>{setPrograms(x=>[...x,p]);setModal(null);setActiveProgramId(p.id);setPage('programs');notify('Program skapat')}}/>}
     {modal==='share'&&<ShareModal programs={programs} onClose={()=>setModal(null)} notify={notify}/>} 
@@ -106,8 +113,8 @@ export default function AppPhase4(){
   </div>
 }
 
-const titleFor=p=>({dashboard:'Din träning',programs:'Programbibliotek',exercises:'Övningsbank',calendar:'Träningskalender',history:'Historik',stats:'Statistik',session:'Aktivt pass'}[p]||'ATLAS')
-const subtitleFor=p=>({dashboard:'Allt du behöver för nästa smarta beslut.',programs:'Skapa, redigera och starta dina program.',exercises:'Sök och filtrera bland övningar och maskiner.',calendar:'Se rytm, kontinuitet och planerade pass.',history:'Filtrera och granska genomförda pass.',stats:'Volym, progression och muskelbalans.',session:'Logga varje set utan att lämna vyn.'}[p]||'')
+const titleFor=p=>({dashboard:'Din träning',programs:'Program',exercises:'Övningsbank',calendar:'Kalender',history:'Workout complete',stats:'Progress',food:'Food',progress:'Progress',recovery:'Recovery',coach:'ATLAS Coach',session:'Aktivt pass'}[p]||'ATLAS')
+const subtitleFor=p=>({dashboard:'Allt du behöver för nästa smarta beslut.',programs:'Skapa, redigera och starta dina program.',exercises:'Sök och filtrera bland övningar och maskiner.',calendar:'Se rytm, kontinuitet och planerade pass.',history:'Summering efter avslutat pass.',stats:'Volym, progression och muskelbalans.',food:'Energi, protein och måltider med premiumöversikt.',progress:'Volym, progression och muskelbalans.',recovery:'Sömn, readiness och belastning i en lugn OLED-vy.',coach:'Din smarta coachvy utan ny AI-logik.',session:'Logga varje set utan att lämna vyn.'}[p]||'')
 
 function Dashboard({programs,history,startProgram,setPage}){
   const week=history.slice(0,4);const volume=week.reduce((s,h)=>s+h.volume,0);const sets=week.reduce((s,h)=>s+h.sets,0)
@@ -160,6 +167,14 @@ function MuscleVolume({compact=false,live={}}){
   const defaults={Bröst:12,Rygg:16,Axlar:10,Triceps:9,Biceps:8,Ben:14,Säte:9,Bål:6,Vader:5};const data=Object.keys(live).length?live:defaults
   return <div className={`muscle-volume ${compact?'compact':''}`}>{Object.entries(data).map(([m,v])=><div key={m}><span>{m}</span><div><i style={{width:`${Math.min(100,(v/18)*100)}%`}}/></div><b>{Number(v).toFixed(Number(v)%1?1:0)} set</b></div>)}</div>
 }
+
+function WorkoutLanding({programs,startProgram}){return <div className="p4-grid"><Card className="span8 atlas-hero-mobile"><span className="pill"><Dumbbell size={15}/>Workout</span><h2>Välj nästa premium-pass</h2><p>Snabb start med tydliga kort, mjuk spacing och samma mörka designsystem som resten av ATLAS.</p><div className="atlas-card-stack">{programs.filter(p=>!p.archived).slice(0,3).map(p=><WorkoutCard key={p.id} title={p.name} tag={p.type} meta={`${p.exercises.length} övningar · ${p.days} dagar/vecka`} onStart={()=>startProgram(p)}/>)}</div></Card><StatCard icon={Flame} label="Planerad intensitet" value="Medel" note="RPE 7–8"/><StatCard icon={HeartPulse} label="Readiness" value="84%" note="Redo" tone="positive"/></div>}
+
+function FoodView({notify}){return <div className="p4-grid"><Card className="span8 atlas-hero-mobile food-glow"><span className="pill"><Apple size={15}/>Nutrition</span><h2>1 420 / 2 050 kcal</h2><p>Premium food-vy med tydlig makrobalans och snabb loggning utan ny affärslogik.</p><ActionButton onClick={()=>notify('Måltid redo att loggas')}><Plus size={17}/>Logga måltid</ActionButton></Card><Card className="span4 center-card"><ProgressRing value={69} label="kcal"/></Card>{[['Protein','132 / 170 g',78],['Kolhydrater','146 / 210 g',70],['Fett','48 / 68 g',71]].map(m=><Card key={m[0]} className="span4 macro-premium"><span>{m[0]}</span><strong>{m[1]}</strong><div className="progress-track"><i style={{width:`${m[2]}%`}}/></div></Card>)}<Card className="span12"><AtlasSectionTitle eyebrow="Dagens logg" title="Måltider" action="Visa allt"/><div className="premium-list">{['Frukost · Yoghurt och bär · 410 kcal','Lunch · Kyckling och ris · 620 kcal','Mellanmål · Whey och banan · 390 kcal'].map(x=><div key={x}>{x}</div>)}</div></Card></div>}
+
+function RecoveryView(){return <div className="p4-grid"><Card className="span8 atlas-hero-mobile recovery-glow"><span className="pill"><Moon size={15}/>Recovery</span><h2>Återhämtning 82%</h2><p>Sömn, puls och lokal belastning sammanfattas i en lugn mobile-first vy.</p><div className="recovery-pills"><span>7 h 24 m sömn</span><span>52 bpm</span><span>Låg stress</span></div></Card><Card className="span4 center-card"><ProgressRing value={82} label="redo"/></Card><StatCard icon={Moon} label="Sömnkvalitet" value="88%" note="Stabil rytm"/><StatCard icon={HeartPulse} label="Vilopuls" value="52" note="Under baslinje" tone="positive"/><StatCard icon={Activity} label="Belastning" value="68%" note="Optimal zon"/></div>}
+
+function CoachView({notify}){return <div className="coach-premium"><div className="coach-orb"><Bot size={42}/></div><span className="pill"><Sparkles size={15}/>Coach</span><h2>Vad vill du optimera idag?</h2><p>UI-only coachpanel som återanvänder befintliga notifieringar och inte introducerar en ny AI-motor.</p><div className="prompt-grid">{['Hur bör jag träna idag?','Vad säger min återhämtning?','Justera veckans plan'].map(q=><button key={q} onClick={()=>notify('Coach-fråga vald')}><Sparkles size={18}/><span>{q}</span><ChevronRight size={18}/></button>)}</div></div>}
 
 function CalendarView({history}){
   const days=Array.from({length:31},(_,i)=>i+1);const trained=new Set(history.map(h=>Number(h.date.slice(-2))))
