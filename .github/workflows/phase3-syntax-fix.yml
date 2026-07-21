@@ -1,0 +1,38 @@
+name: Phase 3 validation
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Normalize JSX and build
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/App3.jsx')
+          s = p.read_text()
+          s = s.replace("{set.done?<Check size={18}/><span/>:<span/>}", "{set.done?<Check size={18}/>:<span/>}")
+          p.write_text(s)
+          PY
+          npm install
+          npm run build
+      - name: Commit normalization when needed
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "atlas-build-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add src/App3.jsx package-lock.json
+            git commit -m "Fix phase 3 JSX and lock dependencies"
+            git push
+          fi
