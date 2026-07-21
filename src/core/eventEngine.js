@@ -2,6 +2,7 @@ import { getAtlasState, setAtlasState } from './atlasStore'
 import { applyWorkoutToRecovery, recoveryScore } from './recoveryEngine'
 import { evaluateAtlasDecisions } from './decisionEngine'
 import { evaluateGoalPlan, normalizeGoal } from './goalEngine'
+import { refreshAtlasMemory } from './memoryEngine'
 
 export const ATLAS_EVENTS = {
   WORKOUT_FINISHED: 'workout.finished',
@@ -75,11 +76,13 @@ export function dispatchAtlasEvent(type, payload = {}) {
         updatedAt: event.createdAt
       }
     }
+    next = refreshAtlasMemory(next)
     next = attachDecisions(next, { trigger: type, workout })
   }
 
   if (type === ATLAS_EVENTS.PROFILE_UPDATED) {
     next = { ...next, profile: { ...(current.profile || {}), ...payload } }
+    next = refreshAtlasMemory(next)
     next = attachDecisions(next, { trigger: type })
   }
 
