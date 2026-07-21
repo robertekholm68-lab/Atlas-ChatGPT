@@ -1,12 +1,27 @@
 const STORAGE_KEY = 'atlas-core-v1'
 
 const defaultState = {
-  version: 3,
+  version: 4,
   profile: {},
   goals: [],
   goalPlans: { active: null, history: [] },
   workouts: [],
   recovery: { muscles: {}, score: 100, updatedAt: null },
+  memory: {
+    generatedAt: null,
+    trainingPattern: {
+      totalSessions: 0,
+      sessionsLast28Days: 0,
+      averageSessionsPerWeek: 0,
+      favoriteTrainingDay: null,
+      lastWorkoutAt: null,
+      daysSinceLastWorkout: null
+    },
+    exercises: [],
+    personalRecords: [],
+    painNotes: [],
+    memories: []
+  },
   coach: { memories: [], insights: [] },
   decisions: { current: null, history: [], logs: [] },
   events: []
@@ -31,6 +46,14 @@ function loadState() {
       ...saved,
       version: defaultState.version,
       recovery: { ...defaultState.recovery, ...(saved.recovery || {}) },
+      memory: {
+        ...defaultState.memory,
+        ...(saved.memory || {}),
+        trainingPattern: {
+          ...defaultState.memory.trainingPattern,
+          ...(saved.memory?.trainingPattern || {})
+        }
+      },
       coach: { ...defaultState.coach, ...(saved.coach || {}) },
       decisions: { ...defaultState.decisions, ...(saved.decisions || {}) },
       goalPlans: { ...defaultState.goalPlans, ...(saved.goalPlans || {}) }
