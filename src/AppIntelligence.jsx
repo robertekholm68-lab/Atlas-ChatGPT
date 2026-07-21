@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  Activity, AlertTriangle, ArrowRight, BarChart3, Bot, Brain, CalendarDays,
-  Check, ChevronRight, ClipboardList, Dumbbell, Gauge, Goal, HeartPulse,
-  History, Home, MessageCircle, Moon, RefreshCw, Save, Settings2, ShieldCheck,
+  Activity, AlertTriangle, ArrowRight, Bot, Brain, CalendarDays,
+  Check, ChevronRight, ClipboardList, Gauge, Goal, HeartPulse,
+  History, Home, MessageCircle, Moon, Save, Settings2, ShieldCheck,
   Sparkles, Target, TrendingUp, UserRound, Zap
 } from 'lucide-react'
 import {
   COACH_MODES, KNOWLEDGE_BASE, answerCoachQuestion, buildDailyDecision,
   buildGoalPlan, calculateReadiness, defaultProfile
 } from './atlasCoachEngine'
+import { getAtlasState, subscribeAtlas } from './core/atlasStore'
+import { recoverMuscles, recoveryScore } from './core/recoveryEngine'
 import './intelligence.css'
 
 const STORAGE_KEY = 'atlas-intelligence-v1'
@@ -31,21 +33,69 @@ function loadState() {
   }
 }
 
+function average(values, fallback = 100) {
+  const valid = values.filter(value => Number.isFinite(value))
+  return valid.length ? Math.round(valid.reduce((sum, value) => sum + value, 0) / valid.length) : fallback
+}
+
+function coreToProfile(core, localProfile) {
+  const recovered = recoverMuscles(core.recovery?.muscles || {}, Date.now())
+  const ready = name => recovered[name] ? Math.round(100 - recovered[name].fatigue) : 100
+  const workouts = core.workouts || []
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const recent = workouts.filter(workout => {
+    const value = workout.completedAt || (workout.date ? `${workout.date}T18:00:00` : null)
+    return value && new Date(value).getTime() >= sevenDaysAgo
+  })
+  const recentSets = recent.reduce((sum, workout) => sum + Number(workout.sets || 0), 0)
+  const latestWorkout = workouts[0] || null
+
+  const chest = ready('Bröst')
+  const back = ready('Rygg')
+  const legs = average([ready('Framsida lår'), ready('Baksida lår'), ready('Säte'), ready('Vader')])
+  const shoulders = ready('Axlar')
+  const arms = average([ready('Biceps'), ready('Triceps'), ready('Underarmar')])
+  const coreReady = ready('Bål')
+  const total = recoveryScore(core.recovery?.muscles || {}, Date.now())
+
+  return {
+    ...localProfile,
+    recovery: { total, chest, back, legs, shoulders, arms, core: coreReady },
+    recentLoad: Math.min(100, Math.round((recentSets / 60) * 100)),
+    coreSummary: {
+      workoutCount: workouts.length,
+      recentWorkoutCount: recent.length,
+      recentSets,
+      latestWorkout: latestWorkout ? {
+        name: latestWorkout.name,
+        completedAt: latestWorkout.completedAt || latestWorkout.date,
+        sets: latestWorkout.sets,
+        volume: latestWorkout.volume,
+        duration: latestWorkout.duration
+      } : null
+    }
+  }
+}
+
 export default function AppIntelligence() {
   const saved = loadState()
   const [page, setPage] = useState(saved?.page || 'today')
-  const [profile, setProfile] = useState(saved?.profile || defaultProfile)
+  const [localProfile, setLocalProfile] = useState(saved?.profile || defaultProfile)
+  const [core, setCore] = useState(getAtlasState)
   const [decisions, setDecisions] = useState(saved?.decisions || [])
   const [messages, setMessages] = useState(saved?.messages || [
-    { role: 'coach', text: 'God morgon Robert. Jag har analyserat dagsformen och dagens plan.' }
+    { role: 'coach', text: 'God morgon Robert. Jag har analyserat dagsformen och din sparade träningshistorik.' }
   ])
   const [toast, setToast] = useState('')
+  const profile = useMemo(() => coreToProfile(core, localProfile), [core, localProfile])
   const decision = useMemo(() => buildDailyDecision(profile), [profile])
   const readiness = calculateReadiness(profile)
 
+  useEffect(() => subscribeAtlas(setCore), [])
+
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ page, profile, decisions, messages }))
-  }, [page, profile, decisions, messages])
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ page, profile: localProfile, decisions, messages }))
+  }, [page, localProfile, decisions, messages])
 
   function notify(text) {
     setToast(text)
@@ -58,24 +108,24 @@ export default function AppIntelligence() {
   }
 
   function updateCheckIn(key, value) {
-    setProfile(p => ({ ...p, checkIn: { ...p.checkIn, [key]: value } }))
+    setLocalProfile(p => ({ ...p, checkIn: { ...p.checkIn, [key]: value } }))
   }
 
   function updateGoal(key, value) {
-    setProfile(p => ({ ...p, goal: { ...p.goal, [key]: value } }))
+    setLocalProfile(p => ({ ...p, goal: { ...p.goal, [key]: value } }))
   }
 
   return <div className="atlas-i-shell">
     <aside className="atlas-i-sidebar">
       <div className="atlas-i-brand"><span>A</span><div><strong>ATLAS</strong><small>INTELLIGENCE</small></div></div>
       <nav>{nav.map(([id, label, Icon]) => <button key={id} className={page === id ? 'active' : ''} onClick={() => setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav>
-      <div className="atlas-i-user"><span>RE</span><div><strong>Robert</strong><small>{COACH_MODES[profile.mode].label} coach</small></div></div>
+      <div className="atlas-i-user"><span>RE</span><div><strong>{profile.name}</strong><small>{COACH_MODES[profile.mode].label} coach</small></div></div>
     </aside>
 
     <main className="atlas-i-main">
       <header className="atlas-i-topbar">
         <div><p>ATLAS Intelligence Engine</p><h1>{pageTitle(page)}</h1></div>
-        <div className="engine-status"><span/><strong>Lokal coach aktiv</strong><small>Ingen extern AI ansluten</small></div>
+        <div className="engine-status"><span/><strong>Lokal coach aktiv</strong><small>{profile.coreSummary.workoutCount} pass i ATLAS Core</small></div>
       </header>
 
       {page === 'today' && <TodayPage profile={profile} decision={decision} readiness={readiness} acceptDecision={acceptDecision} setPage={setPage}/>} 
@@ -83,7 +133,7 @@ export default function AppIntelligence() {
       {page === 'goal' && <GoalPage profile={profile} updateGoal={updateGoal} notify={notify}/>} 
       {page === 'recovery' && <RecoveryPage profile={profile} updateCheckIn={updateCheckIn} readiness={readiness}/>} 
       {page === 'decisions' && <DecisionPage decisions={decisions} current={decision} acceptDecision={acceptDecision}/>} 
-      {page === 'settings' && <SettingsPage profile={profile} setProfile={setProfile} notify={notify}/>} 
+      {page === 'settings' && <SettingsPage profile={profile} setProfile={setLocalProfile} notify={notify}/>} 
     </main>
 
     <nav className="atlas-i-mobile-nav">{nav.slice(0,5).map(([id,label,Icon]) => <button key={id} className={page===id?'active':''} onClick={()=>setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav>
@@ -92,6 +142,7 @@ export default function AppIntelligence() {
 }
 
 function TodayPage({ profile, decision, readiness, acceptDecision, setPage }) {
+  const latest = profile.coreSummary.latestWorkout
   return <div className="i-grid">
     <section className="i-hero span-8">
       <div><span className="i-pill"><Sparkles size={15}/> Dagens brief</span><h2>God morgon, {profile.name}</h2><p>{decision.message}</p><div className="i-actions"><button className="i-primary" onClick={acceptDecision}><Check size={18}/> Acceptera planen</button><button className="i-secondary" onClick={()=>setPage('coach')}>Fråga coachen <ArrowRight size={17}/></button></div></div>
@@ -99,8 +150,8 @@ function TodayPage({ profile, decision, readiness, acceptDecision, setPage }) {
     </section>
     <Metric icon={Moon} label="Sömn" value={`${profile.checkIn.sleep} h`} note="Senaste natten"/>
     <Metric icon={Zap} label="Energi" value={`${profile.checkIn.energy}/10`} note="Egen skattning"/>
-    <Metric icon={Activity} label="Belastning" value={`${profile.recentLoad}%`} note="Senaste 7 dagarna"/>
-    <Metric icon={Goal} label="Målföljsamhet" value={`${profile.adherence}%`} note={`${profile.goal.weeks} veckor kvar`}/>
+    <Metric icon={Activity} label="Belastning" value={`${profile.recentLoad}%`} note={`${profile.coreSummary.recentSets} set senaste 7 dagarna`}/>
+    <Metric icon={Goal} label="Senaste pass" value={latest?.name || 'Inget ännu'} note={latest ? `${latest.sets || 0} set · ${latest.duration || 0} min` : 'Logga ett pass i Träning'}/>
 
     <section className="i-panel span-7">
       <SectionTitle icon={Brain} eyebrow="Beslut" title={decision.title}/>
@@ -130,7 +181,7 @@ function TodayPage({ profile, decision, readiness, acceptDecision, setPage }) {
 
 function CoachPage({ profile, messages, setMessages, setPage }) {
   const [text, setText] = useState('')
-  const [suggestions, setSuggestions] = useState(['Hur bör jag träna idag?', 'Varför är benen trötta?', 'Hur ligger jag till mot målet?'])
+  const [suggestions, setSuggestions] = useState(['Hur bör jag träna idag?', 'Vad säger mitt senaste pass?', 'Varför är benen trötta?'])
   function send(value=text) {
     if (!value.trim()) return
     const result = answerCoachQuestion(value, profile)
@@ -139,7 +190,7 @@ function CoachPage({ profile, messages, setMessages, setPage }) {
     setText('')
   }
   return <div className="coach-page">
-    <section className="coach-header"><div className="coach-avatar"><Bot size={36}/></div><div><span>Lokal kunskapsmotor</span><h2>ATLAS Coach</h2><p>Resonerar utifrån dagsform, mål, belastning och träningsprinciper.</p></div></section>
+    <section className="coach-header"><div className="coach-avatar"><Bot size={36}/></div><div><span>Lokal kunskapsmotor</span><h2>ATLAS Coach</h2><p>Resonerar utifrån dagsform, mål och {profile.coreSummary.workoutCount} sparade träningspass.</p></div></section>
     <section className="chat-window">{messages.map((m,i)=><div key={i} className={`chat-message ${m.role}`}><span>{m.role==='coach'?'ATLAS':'Du'}</span><p>{m.text}</p></div>)}</section>
     <div className="suggestion-row">{suggestions.map(s=><button key={s} onClick={()=>send(s)}>{s}</button>)}</div>
     <div className="coach-input"><input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Berätta hur du mår eller fråga om träningen…"/><button onClick={()=>send()}><ArrowRight size={20}/></button></div>
@@ -173,7 +224,7 @@ function RecoveryPage({ profile, updateCheckIn, readiness }) {
       <label className="sleep-field">Sömn<input type="number" step="0.1" value={profile.checkIn.sleep} onChange={e=>updateCheckIn('sleep',Number(e.target.value))}/><span>timmar</span></label>
       <label className="pain-field">Smärta<select value={profile.checkIn.pain} onChange={e=>updateCheckIn('pain',e.target.value)}><option value="none">Ingen</option><option value="mild">Lätt</option><option value="moderate">Tydlig</option></select></label>
     </section>
-    <section className="i-panel span-7"><SectionTitle icon={HeartPulse} eyebrow="Recovery Engine" title={`Total readiness ${readiness}`}/>
+    <section className="i-panel span-7"><SectionTitle icon={HeartPulse} eyebrow="Recovery Engine · live från ATLAS Core" title={`Total readiness ${readiness}`}/>
       <div className="recovery-list">{Object.entries(profile.recovery).filter(([k])=>k!=='total').map(([key,value])=><div key={key}><span>{muscleLabel(key)}</span><div><i style={{width:`${value}%`}}/></div><b>{value}%</b></div>)}</div>
       <div className={`recovery-advice ${readiness<45?'warning':''}`}><ShieldCheck size={24}/><div><strong>{readiness>=70?'Klar för kvalitetsträning':readiness>=45?'Träna med reducerad volym':'Prioritera återhämtning'}</strong><p>{readiness>=70?KNOWLEDGE_BASE.readiness.high:readiness>=45?KNOWLEDGE_BASE.readiness.medium:KNOWLEDGE_BASE.readiness.low}</p></div></div>
     </section>
@@ -195,7 +246,7 @@ function SettingsPage({ profile, setProfile, notify }) {
     <section className="i-panel span-7"><SectionTitle icon={UserRound} eyebrow="Coachpersonlighet" title="Hur ska ATLAS kommunicera?"/>
       <div className="mode-grid">{Object.entries(COACH_MODES).map(([key,mode])=><button key={key} className={profile.mode===key?'active':''} onClick={()=>setProfile(p=>({...p,mode:key}))}><strong>{mode.label}</strong><span>{mode.prefix}</span></button>)}</div>
     </section>
-    <section className="i-panel span-5"><SectionTitle icon={Brain} eyebrow="AI-adapter" title="Framtida anslutning"/><div className="adapter-card"><span><Bot size={24}/></span><div><strong>Lokal kunskapsmotor</strong><small>Aktiv nu</small></div><Check size={19}/></div><div className="adapter-card disabled"><span><MessageCircle size={24}/></span><div><strong>Claude / ChatGPT</strong><small>Adapter förberedd, ingen API-nyckel lagras</small></div></div><button className="i-secondary full" onClick={()=>notify('Extern AI kopplas in i en senare fas')}>Visa integrationsplan</button></section>
+    <section className="i-panel span-5"><SectionTitle icon={Brain} eyebrow="AI-adapter" title="Framtida anslutning"/><div className="adapter-card"><span><Bot size={24}/></span><div><strong>Lokal kunskapsmotor</strong><small>Aktiv nu · ATLAS Core ansluten</small></div><Check size={19}/></div><div className="adapter-card disabled"><span><MessageCircle size={24}/></span><div><strong>Claude / ChatGPT</strong><small>Adapter förberedd, ingen API-nyckel lagras</small></div></div><button className="i-secondary full" onClick={()=>notify('Extern AI kopplas in i en senare fas')}>Visa integrationsplan</button></section>
     <section className="i-panel span-12"><SectionTitle icon={AlertTriangle} eyebrow="Säkerhet" title="Coachens gränser"/><p>ATLAS ger träningsstöd och ersätter inte medicinsk bedömning. Skarp eller ökande smärta, neurologiska symtom, bröstsmärta eller allvarlig sjukdom ska bedömas av vården.</p></section>
   </div>
 }
