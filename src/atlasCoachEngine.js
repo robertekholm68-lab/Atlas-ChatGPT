@@ -25,7 +25,8 @@ export const defaultProfile = {
   recovery: { total: 78, chest: 92, back: 71, legs: 54, shoulders: 64, arms: 83, core: 76 },
   adherence: 82,
   missedSessions: 1,
-  recentLoad: 68
+  recentLoad: 68,
+  coreSummary: { workoutCount: 0, recentWorkoutCount: 0, recentSets: 0, latestWorkout: null }
 }
 
 export function calculateReadiness(profile) {
@@ -34,6 +35,12 @@ export function calculateReadiness(profile) {
   const subjective = (c.energy * 12 + c.motivation * 8 + (10 - c.stress) * 8 + (10 - c.soreness) * 5) / 3.3
   const painPenalty = c.pain === 'none' ? 0 : c.pain === 'mild' ? 12 : 32
   return Math.round(Math.max(20, Math.min(98, sleepScore * 0.35 + subjective * 0.35 + profile.recovery.total * 0.3 - painPenalty)))
+}
+
+function latestWorkoutEvidence(profile) {
+  const latest = profile.coreSummary?.latestWorkout
+  if (!latest) return 'Ingen genomförd träning finns ännu i ATLAS Core'
+  return `Senaste pass ${latest.name}: ${latest.sets || 0} set, ${latest.duration || 0} min`
 }
 
 export function buildDailyDecision(profile) {
@@ -75,7 +82,8 @@ export function buildDailyDecision(profile) {
       `Sömn ${profile.checkIn.sleep} h`,
       `Energi ${profile.checkIn.energy}/10`,
       `Total återhämtning ${profile.recovery.total}%`,
-      `Ben ${profile.recovery.legs}%`
+      `Ben ${profile.recovery.legs}%`,
+      latestWorkoutEvidence(profile)
     ]
   }
 }
@@ -95,14 +103,23 @@ export function buildGoalPlan(goal) {
   }
 }
 
+function describeLatestWorkout(profile) {
+  const latest = profile.coreSummary?.latestWorkout
+  if (!latest) return 'Du har ännu inget genomfört pass i ATLAS Core. Avsluta ett pass i träningsmodulen så kan jag analysera det.'
+  const date = latest.completedAt ? new Date(latest.completedAt).toLocaleDateString('sv-SE') : 'okänt datum'
+  const volume = Number(latest.volume || 0).toLocaleString('sv-SE')
+  return `Ditt senaste pass var ${latest.name} den ${date}: ${latest.sets || 0} set, ${volume} kg total volym och ${latest.duration || 0} minuter. Återhämtningen har räknats om utifrån de genomförda seten.`
+}
+
 export function answerCoachQuestion(text, profile) {
   const q = text.toLowerCase()
   const decision = buildDailyDecision(profile)
+  if (q.includes('senaste pass') || q.includes('förra pass')) return { reply: describeLatestWorkout(profile), followUps: ['Hur bör jag träna idag?', 'Hur återhämtade är benen?', 'Kan jag öka vikten?'] }
   if (q.includes('trött')) return { reply: 'Är du främst mentalt trött, muskulärt trött eller sömnig?', followUps: ['Mentalt', 'Muskulärt', 'Sömnig'] }
   if (q.includes('ont') || q.includes('smärta')) return { reply: 'Var sitter besväret, hur starkt är det och känns det skarpt, molande eller instabilt?', followUps: ['Axel', 'Rygg', 'Knä', 'Annat'] }
-  if (q.includes('idag') || q.includes('träna')) return { reply: `${decision.title}. ${decision.reason}`, followUps: ['Varför?', 'Anpassa passet', 'Jag vill ändå köra ben'] }
+  if (q.includes('idag') || q.includes('träna')) return { reply: `${decision.title}. ${decision.reason} Underlaget omfattar ${profile.coreSummary?.recentSets || 0} genomförda set de senaste sju dagarna.`, followUps: ['Varför?', 'Vad säger mitt senaste pass?', 'Anpassa passet'] }
   if (q.includes('varför')) return { reply: `${decision.reason} Underlaget är: ${decision.evidence.join(', ')}.`, followUps: ['Visa alternativ', 'Acceptera rekommendationen'] }
-  if (q.includes('progress') || q.includes('öka')) return { reply: KNOWLEDGE_BASE.progression, followUps: ['Visa nästa vikt', 'Behåll nuvarande belastning'] }
+  if (q.includes('progress') || q.includes('öka')) return { reply: KNOWLEDGE_BASE.progression, followUps: ['Vad säger mitt senaste pass?', 'Behåll nuvarande belastning'] }
   if (q.includes('mål')) return { reply: `Ditt mål är ${profile.goal.target}. Med ${profile.goal.weeks} veckor kvar bör fokus vara följsamhet, gradvis progression och veckovis utvärdering.`, followUps: ['Visa målplan', 'Ändra mål'] }
-  return { reply: 'Jag kan hjälpa dig med dagens träning, återhämtning, progression, smärta, mål och programanpassning. Beskriv läget med en mening.', followUps: ['Hur bör jag träna idag?', 'Varför är benen trötta?', 'Hur ligger jag till mot målet?'] }
+  return { reply: `Jag kan hjälpa dig med dagens träning, återhämtning, progression, smärta och mål. Jag ser just nu ${profile.coreSummary?.workoutCount || 0} pass i ATLAS Core.`, followUps: ['Hur bör jag träna idag?', 'Vad säger mitt senaste pass?', 'Hur ligger jag till mot målet?'] }
 }
