@@ -5,7 +5,7 @@ import {
   Activity, Apple, Archive, ArrowDown, ArrowUp, BarChart3, Bot, CalendarDays, Check,
   ChevronRight, Clipboard, Copy, Download, Dumbbell, FileUp, Flame, GripVertical,
   HeartPulse, History, Library, Moon, ListFilter, MoreHorizontal, Pencil, Play, Plus,
-  QrCode, Search, Share2, Sparkles, Star, Target, Trash2, Utensils, Trophy, Upload, X, Clock, Pause, SkipForward
+  QrCode, Search, Share2, Sparkles, Star, Target, Trash2, Utensils, Trophy, Upload, X, Clock, Pause, SkipForward, Waves
 } from 'lucide-react'
 
 const exerciseBank = [
@@ -101,7 +101,7 @@ export default function AppPhase4(){
     const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(data.programs)setPrograms(data.programs);if(data.history)setHistory(data.history);notify('Data importerad')}catch{notify('Filen kunde inte läsas')}};reader.readAsText(file)
   }
 
-  const nav=[['dashboard','Home',Activity],['programs','Program',Library],['session','Workout',Dumbbell],['food','Food',Utensils],['progress','Progress',BarChart3],['recovery','Recovery',HeartPulse],['coach','Coach',Bot]]
+  const nav=[['dashboard','Home',Activity],['session','Workout',Dumbbell],['recovery','Recovery',HeartPulse],['coach','AI Coach',Bot],['food','Food',Utensils],['progress','Progress',BarChart3]]
   const bottomNavItems = nav.map(([id, label, icon]) => ({ id, label, icon }))
   return <div className="p4-shell">
     <aside className="p4-sidebar"><div className="p4-brand"><span>A</span><div><strong>ATLAS</strong><small>INTELLIGENT TRAINING</small></div></div><nav>{nav.map(([id,label,Icon])=><button key={id} className={page===id?'active':''} onClick={()=> id==='session' && !session ? setPage('programs') : setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav><div className="p4-side-tools"><button onClick={exportData}><Download size={17}/>Exportera</button><button onClick={()=>fileInput.current?.click()}><Upload size={17}/>Importera</button><input ref={fileInput} type="file" accept="application/json" hidden onChange={importData}/></div></aside>
@@ -192,7 +192,16 @@ function WorkoutLanding({programs,startProgram}){const today=programs.find(p=>p.
 
 function FoodView({notify}){return <div className="p4-grid"><Card className="span8 atlas-hero-mobile food-glow"><span className="pill"><Apple size={15}/>Nutrition</span><h2>1 420 / 2 050 kcal</h2><p>Premium food-vy med tydlig makrobalans och snabb loggning utan ny affärslogik.</p><ActionButton onClick={()=>notify('Måltid redo att loggas')}><Plus size={17}/>Logga måltid</ActionButton></Card><Card className="span4 center-card"><ProgressRing value={69} label="kcal"/></Card>{[['Protein','132 / 170 g',78],['Kolhydrater','146 / 210 g',70],['Fett','48 / 68 g',71]].map(m=><Card key={m[0]} className="span4 macro-premium"><span>{m[0]}</span><strong>{m[1]}</strong><div className="progress-track"><i style={{width:`${m[2]}%`}}/></div></Card>)}<Card className="span12"><AtlasSectionTitle eyebrow="Dagens logg" title="Måltider" action="Visa allt"/><div className="premium-list">{['Frukost · Yoghurt och bär · 410 kcal','Lunch · Kyckling och ris · 620 kcal','Mellanmål · Whey och banan · 390 kcal'].map(x=><div key={x}>{x}</div>)}</div></Card></div>}
 
-function RecoveryView(){return <div className="p4-grid"><Card className="span8 atlas-hero-mobile recovery-glow"><span className="pill"><Moon size={15}/>Recovery</span><h2>Återhämtning 82%</h2><p>Sömn, puls och lokal belastning sammanfattas i en lugn mobile-first vy.</p><div className="recovery-pills"><span>7 h 24 m sömn</span><span>52 bpm</span><span>Låg stress</span></div></Card><Card className="span4 center-card"><ProgressRing value={82} label="redo"/></Card><StatCard icon={Moon} label="Sömnkvalitet" value="88%" note="Stabil rytm"/><StatCard icon={HeartPulse} label="Vilopuls" value="52" note="Under baslinje" tone="positive"/><StatCard icon={Activity} label="Belastning" value="68%" note="Optimal zon"/></div>}
+const recoveryMetrics=[
+  {icon:Moon,label:'Sleep quality',value:'88%',note:'7 h 24 m · steady rhythm',tone:'positive'},
+  {icon:HeartPulse,label:'Resting heart rate',value:'52 bpm',note:'4 below baseline',tone:'positive'},
+  {icon:Activity,label:'Training load',value:'68%',note:'Optimal adaptation zone'},
+  {icon:Waves,label:'Stress balance',value:'Low',note:'Breathing trend stable',tone:'positive'}
+]
+
+const recoveryTimeline=[['Now',82],['+6h',85],['+12h',88],['+24h',92],['+36h',95]]
+
+function RecoveryView(){return <div className="p4-grid recovery-page"><Card className="span8 atlas-hero-mobile recovery-glow recovery-hero"><span className="pill"><Moon size={15}/>Recovery command center</span><h2>Återhämtning 82%</h2><p>En lugn OLED-vy från Recovery-konceptet: readiness, sömn, puls och lokal belastning samlas till ett tydligt beslut inför nästa pass.</p><div className="recovery-pills"><span>7 h 24 m sleep</span><span>52 bpm resting HR</span><span>Low stress</span><span>Next hard session: tomorrow</span></div></Card><Card className="span4 center-card recovery-score-card"><ProgressRing value={82} label="ready"/><strong>Green light</strong><span>Keep 1–2 reps in reserve on heavy presses.</span></Card>{recoveryMetrics.map(metric=><StatCard key={metric.label} icon={metric.icon} label={metric.label} value={metric.value} note={metric.note} tone={metric.tone}/>) }<section className="panel span7 recovery-plan"><SectionTitle eyebrow="Next 36 hours" title="Recovery forecast"/><div className="recovery-timeline-premium">{recoveryTimeline.map(([label,value])=><div key={label}><span>{label}</span><div><i style={{height:`${value}%`}}/></div><b>{value}</b></div>)}</div><p><Sparkles size={16}/>ATLAS recommends mobility today and normal upper-body volume once readiness passes 88%.</p></section><section className="panel span5 recovery-plan"><SectionTitle eyebrow="Muscle readiness" title="Local load map"/><div className="recovery-muscle-list">{[['Chest','Ready','86%'],['Back','Ready','84%'],['Shoulders','Moderate','71%'],['Lower back','Watch','58%']].map(([muscle,state,value])=><div key={muscle}><span><strong>{muscle}</strong><small>{state}</small></span><b>{value}</b></div>)}</div></section></div>}
 
 function CoachView({notify}){return <div className="coach-premium"><div className="coach-orb"><Bot size={42}/></div><span className="pill"><Sparkles size={15}/>Coach</span><h2>Vad vill du optimera idag?</h2><p>UI-only coachpanel som återanvänder befintliga notifieringar och inte introducerar en ny AI-motor.</p><div className="prompt-grid">{['Hur bör jag träna idag?','Vad säger min återhämtning?','Justera veckans plan'].map(q=><button key={q} onClick={()=>notify('Coach-fråga vald')}><Sparkles size={18}/><span>{q}</span><ChevronRight size={18}/></button>)}</div></div>}
 
