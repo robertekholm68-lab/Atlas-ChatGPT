@@ -1,10 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import AppPhase3 from './AppPhase3'
+import AppPhase4 from './AppPhase4'
 import './styles.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <AppPhase3 />
+    <AppPhase4 />
   </React.StrictMode>
 )
