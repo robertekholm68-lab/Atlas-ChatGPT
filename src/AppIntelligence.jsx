@@ -10,6 +10,7 @@ import {
   buildGoalPlan, calculateReadiness, defaultProfile
 } from './atlasCoachEngine'
 import { getAtlasState, subscribeAtlas } from './core/atlasStore'
+import { AtlasBottomNavigation, AtlasHomeScreen } from './atlasHome'
 import { recoverMuscles, recoveryScore } from './core/recoveryEngine'
 import { buildCoachRecommendation } from './core/coachIntelligenceEngine'
 import './intelligence.css'
@@ -130,7 +131,7 @@ export default function AppIntelligence() {
         <div className="engine-status"><span/><strong>Lokal coach aktiv</strong><small>{profile.coreSummary.workoutCount} pass i ATLAS Core</small></div>
       </header>
 
-      {page === 'today' && <TodayPage profile={profile} decision={decision} readiness={readiness} acceptDecision={acceptDecision} setPage={setPage}/>} 
+      {page === 'today' && <AtlasHomeScreen profile={profile} core={core} recommendation={coachRecommendation} readiness={readiness} setPage={setPage}/>} 
       {page === 'coach' && <CoachPage profile={profile} recommendation={coachRecommendation} messages={messages} setMessages={setMessages} setPage={setPage}/>} 
       {page === 'goal' && <GoalPage profile={profile} updateGoal={updateGoal} notify={notify}/>} 
       {page === 'recovery' && <RecoveryPage profile={profile} updateCheckIn={updateCheckIn} readiness={readiness}/>} 
@@ -138,7 +139,7 @@ export default function AppIntelligence() {
       {page === 'settings' && <SettingsPage profile={profile} setProfile={setLocalProfile} notify={notify}/>} 
     </main>
 
-    <nav className="atlas-i-mobile-nav">{nav.slice(0,5).map(([id,label,Icon]) => <button key={id} className={page===id?'active':''} onClick={()=>setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav>
+    <AtlasBottomNavigation page={page} setPage={setPage}/>
     {toast && <div className="atlas-i-toast">{toast}</div>}
   </div>
 }
