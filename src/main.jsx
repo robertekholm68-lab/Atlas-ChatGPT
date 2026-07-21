@@ -1,10 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import AppPhase4 from './AppPhase4'
+import AppIntelligence from './AppIntelligence'
 import './styles.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <AppPhase4 />
+    <AppIntelligence />
   </React.StrictMode>
 )
