@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "api:dev": "node --env-file=.env.local server/openaiCoach.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },
