@@ -11,6 +11,7 @@ import {
 } from './atlasCoachEngine'
 import { getAtlasState, subscribeAtlas } from './core/atlasStore'
 import { recoverMuscles, recoveryScore } from './core/recoveryEngine'
+import { buildCoachRecommendation } from './core/coachIntelligenceEngine'
 import './intelligence.css'
 
 const STORAGE_KEY = 'atlas-intelligence-v1'
@@ -90,6 +91,7 @@ export default function AppIntelligence() {
   const profile = useMemo(() => coreToProfile(core, localProfile), [core, localProfile])
   const decision = useMemo(() => buildDailyDecision(profile), [profile])
   const readiness = calculateReadiness(profile)
+  const coachRecommendation = useMemo(() => core.coach?.recommendation || buildCoachRecommendation(core), [core])
 
   useEffect(() => subscribeAtlas(setCore), [])
 
@@ -129,7 +131,7 @@ export default function AppIntelligence() {
       </header>
 
       {page === 'today' && <TodayPage profile={profile} decision={decision} readiness={readiness} acceptDecision={acceptDecision} setPage={setPage}/>} 
-      {page === 'coach' && <CoachPage profile={profile} messages={messages} setMessages={setMessages} setPage={setPage}/>} 
+      {page === 'coach' && <CoachPage profile={profile} recommendation={coachRecommendation} messages={messages} setMessages={setMessages} setPage={setPage}/>} 
       {page === 'goal' && <GoalPage profile={profile} updateGoal={updateGoal} notify={notify}/>} 
       {page === 'recovery' && <RecoveryPage profile={profile} updateCheckIn={updateCheckIn} readiness={readiness}/>} 
       {page === 'decisions' && <DecisionPage decisions={decisions} current={decision} acceptDecision={acceptDecision}/>} 
@@ -179,24 +181,54 @@ function TodayPage({ profile, decision, readiness, acceptDecision, setPage }) {
   </div>
 }
 
-function CoachPage({ profile, messages, setMessages, setPage }) {
+function CoachPage({ profile, recommendation, messages, setMessages, setPage }) {
   const [text, setText] = useState('')
-  const [suggestions, setSuggestions] = useState(['Hur bör jag träna idag?', 'Vad säger mitt senaste pass?', 'Varför är benen trötta?'])
+  const prompts = buildCoachPrompts(recommendation)
   function send(value=text) {
     if (!value.trim()) return
-    const result = answerCoachQuestion(value, profile)
+    const result = answerCoachQuestion(`${value}\n\nCoach recommendation context: ${JSON.stringify(recommendation)}`, profile)
     setMessages(m => [...m, {role:'user', text:value}, {role:'coach', text:result.reply}])
-    setSuggestions(result.followUps || [])
     setText('')
   }
-  return <div className="coach-page">
-    <section className="coach-header"><div className="coach-avatar"><Bot size={36}/></div><div><span>Lokal kunskapsmotor</span><h2>ATLAS Coach</h2><p>Resonerar utifrån dagsform, mål och {profile.coreSummary.workoutCount} sparade träningspass.</p></div></section>
-    <section className="chat-window">{messages.map((m,i)=><div key={i} className={`chat-message ${m.role}`}><span>{m.role==='coach'?'ATLAS':'Du'}</span><p>{m.text}</p></div>)}</section>
-    <div className="suggestion-row">{suggestions.map(s=><button key={s} onClick={()=>send(s)}>{s}</button>)}</div>
-    <div className="coach-input"><input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Berätta hur du mår eller fråga om träningen…"/><button onClick={()=>send()}><ArrowRight size={20}/></button></div>
-    <button className="text-link" onClick={()=>setPage('decisions')}>Visa coachens beslutshistorik</button>
+  const ctx = recommendation.context || {}
+  return <div className="coach-page proactive-coach">
+    <section className="coach-context-card">
+      <div><span>God morgon, {ctx.firstName || profile.name}</span><h2>{recommendation.insufficientData ? 'ATLAS behöver mer underlag' : 'Dagens rådgivning är klar'}</h2><p>{recommendation.insufficientData ? 'Logga dagsform och pass för mer personlig precision.' : `Energi ${profile.checkIn.energy}/10 · Sömn ${profile.checkIn.sleep} h · Motivation ${profile.checkIn.motivation}/10 · Stress ${profile.checkIn.stress}/10 · Återhämtning ${ctx.recoveryScore ?? profile.recovery.total}%`}</p></div>
+      <div className="coach-confidence"><strong>{Math.round((recommendation.confidence || 0) * 100)}%</strong><span>{recommendation.confidenceLabel} säkerhet</span></div>
+    </section>
+
+    <section className={`i-hero coach-decision-card ${recommendation.insufficientData ? 'insufficient' : ''}`}>
+      <div><span className="i-pill"><Sparkles size={15}/> DAGENS BESLUT</span><h2>{recommendation.headline}</h2><p>{recommendation.summary}</p><small>{Math.round((recommendation.confidence || 0) * 100)} % confidence att detta är det mest lämpliga valet utifrån tillgänglig data.</small><div className="i-actions"><button className="i-primary" onClick={()=>setPage(recommendation.primaryActionTarget || 'today')}><Zap size={18}/> {recommendation.primaryActionLabel}</button>{recommendation.alternatives?.[0] && <button className="i-secondary" onClick={()=>setPage(recommendation.alternatives[0].target)}>{recommendation.alternatives[0].label}<ArrowRight size={17}/></button>}</div></div>
+    </section>
+
+    {!recommendation.insufficientData && <section className="i-panel"><SectionTitle icon={Brain} eyebrow="Primär rekommendation" title={recommendation.decision?.title || recommendation.headline}/><p className="decision-reason">{recommendation.summary}</p></section>}
+
+    {!!recommendation.reasons?.length && <section className="i-panel"><SectionTitle icon={ClipboardList} eyebrow="Varför denna rekommendation" title="Spårbart underlag"/><div className="coach-reason-list">{recommendation.reasons.map(item => <div key={item.text}><Check size={16}/><span>{item.text}</span><small>{item.source}</small></div>)}</div></section>}
+
+    {recommendation.expectedImpact && <section className="i-panel"><SectionTitle icon={TrendingUp} eyebrow="Förväntad påverkan" title="Försiktig prognos"/><p className="decision-reason">{recommendation.expectedImpact}</p></section>}
+
+    <section className="coach-support-grid">
+      <SupportCard label="Veckan" value={`${ctx.weeklyCompletion ?? 0} pass`} note="Senaste 7 dagarna"/>
+      <SupportCard label="Senaste pass" value={ctx.latestWorkout?.name || 'Saknas'} note={ctx.latestWorkout ? 'Från ATLAS Core' : 'Logga ett pass'}/>
+      <SupportCard label="Mål" value={ctx.activeGoal || 'Ej valt'} note="Aktiv målbild"/>
+      <SupportCard label="Datakvalitet" value={recommendation.dataQuality?.label || 'okänd'} note={`${recommendation.dataQuality?.signals || 0}/${recommendation.dataQuality?.possibleSignals || 0} signaler`}/>
+    </section>
+
+    <section className="i-panel coach-followup"><SectionTitle icon={MessageCircle} eyebrow="Chat för följdfrågor" title="Fråga om beslutet"/>
+      <div className="suggestion-row">{prompts.map(s=><button key={s} onClick={()=>send(s)}>{s}</button>)}</div>
+      <section className="chat-window compact">{messages.map((m,i)=><div key={i} className={`chat-message ${m.role}`}><span>{m.role==='coach'?'ATLAS':'Du'}</span><p>{m.text}</p></div>)}</section>
+      <div className="coach-input"><input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ställ en följdfråga om dagens rekommendation…"/><button onClick={()=>send()}><ArrowRight size={20}/></button></div>
+    </section>
   </div>
 }
+
+function buildCoachPrompts(recommendation) {
+  if (recommendation.insufficientData) return ['Vad behöver jag logga?', 'Visa programmet', 'Hur fungerar rekommendationen?']
+  return ['Varför rekommenderar du detta?', 'Vad händer om jag vilar idag?', 'Kan du göra passet lättare?', 'Hur ligger jag till mot mitt mål?']
+}
+
+function SupportCard({ label, value, note }) { return <article className="i-panel coach-support-card"><span>{label}</span><strong>{value}</strong><small>{note}</small></article> }
+
 
 function GoalPage({ profile, updateGoal, notify }) {
   const plan = buildGoalPlan(profile.goal)

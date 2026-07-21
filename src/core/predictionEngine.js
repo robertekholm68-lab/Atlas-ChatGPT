@@ -137,7 +137,8 @@ export function generateAtlasPredictions(state = {}, now = Date.now(), options =
 
   for (const goal of state.goals || []) {
     const targetNum = Number(String(goal.target || '').match(/-?\d+(\.\d+)?/)?.[0])
-    const field = METRIC_FIELDS.find(f => goal.title?.toLowerCase().includes(f.label.split(' ')[0]) || goal.target?.toLowerCase().includes(f.key.toLowerCase()))
+    const goalText = `${goal.title || ''} ${goal.target || ''}`.toLowerCase()
+    const field = METRIC_FIELDS.find(f => goalText.includes(f.label.split(' ')[0]) || goalText.includes(f.key.toLowerCase()) || f.aliases.some(alias => goalText.includes(String(alias).toLowerCase())) || (f.key === 'weight' && goalText.includes('kg')))
     const points = field ? metricPoints(state, field) : []
     if (field && Number.isFinite(targetNum) && points.length >= PREDICTION_THRESHOLDS.goalTimeline) {
       const rate = weightedRate(points, field.key === 'bodyFat' ? 0.15 : 0.25)

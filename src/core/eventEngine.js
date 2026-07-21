@@ -4,12 +4,18 @@ import { evaluateAtlasDecisions } from './decisionEngine'
 import { evaluateGoalPlan, normalizeGoal } from './goalEngine'
 import { refreshAtlasMemory } from './memoryEngine'
 import { refreshAtlasPredictions } from './predictionEngine'
+import { refreshAtlasInsights } from './insightEngine'
+import { buildCoachRecommendation } from './coachIntelligenceEngine'
 
 export const ATLAS_EVENTS = {
   WORKOUT_FINISHED: 'workout.finished',
   PROFILE_UPDATED: 'profile.updated',
   GOAL_UPDATED: 'goal.updated',
-  RECOVERY_UPDATED: 'recovery.updated'
+  RECOVERY_UPDATED: 'recovery.updated',
+  BODY_MEASUREMENT_UPDATED: 'bodyMeasurement.updated',
+  INSIGHT_REGENERATED: 'insight.regenerated',
+  PREDICTION_REGENERATED: 'prediction.regenerated',
+  DAILY_CHECK_IN: 'dailyCheckIn.updated'
 }
 
 const inferredPrograms = {
@@ -40,6 +46,19 @@ function workoutTimestamp(workout) {
   if (workout.completedAt) return new Date(workout.completedAt).getTime()
   if (workout.date) return new Date(`${workout.date}T18:00:00`).getTime()
   return Date.now()
+}
+
+
+function attachCoachRecommendation(state) {
+  const recommendation = buildCoachRecommendation(state)
+  return {
+    ...state,
+    coach: {
+      ...(state.coach || {}),
+      recommendation,
+      recommendationHistory: [recommendation, ...(state.coach?.recommendationHistory || [])].slice(0, 50)
+    }
+  }
 }
 
 function attachDecisions(state, context) {
@@ -110,6 +129,25 @@ export function dispatchAtlasEvent(type, payload = {}) {
     next = attachDecisions(next, { trigger: type, goal, goalPlan: plan })
   }
 
+  if (type === ATLAS_EVENTS.DAILY_CHECK_IN) {
+    next = { ...next, profile: { ...(current.profile || {}), checkIn: { ...(current.profile?.checkIn || {}), ...payload } } }
+    next = attachDecisions(next, { trigger: type })
+  }
+
+  if (type === ATLAS_EVENTS.BODY_MEASUREMENT_UPDATED) {
+    next = { ...next, bodyMeasurements: [payload, ...(current.bodyMeasurements || [])].slice(0, 250) }
+    next = refreshAtlasPredictions(next)
+    next = attachDecisions(next, { trigger: type })
+  }
+
+  if (type === ATLAS_EVENTS.INSIGHT_REGENERATED) {
+    next = refreshAtlasInsights(next)
+  }
+
+  if (type === ATLAS_EVENTS.PREDICTION_REGENERATED) {
+    next = refreshAtlasPredictions(next)
+  }
+
   if (type === ATLAS_EVENTS.RECOVERY_UPDATED) {
     next = {
       ...next,
@@ -118,6 +156,9 @@ export function dispatchAtlasEvent(type, payload = {}) {
     next = refreshAtlasPredictions(next)
     next = attachDecisions(next, { trigger: type })
   }
+
+  next = refreshAtlasInsights(next)
+  next = attachCoachRecommendation(next)
 
   setAtlasState(next)
   return event
@@ -133,4 +174,8 @@ export function updateAtlasGoal(goal) {
 
 export function updateAtlasRecovery(recovery) {
   return dispatchAtlasEvent(ATLAS_EVENTS.RECOVERY_UPDATED, recovery)
+}
+
+export function updateAtlasDailyCheckIn(checkIn) {
+  return dispatchAtlasEvent(ATLAS_EVENTS.DAILY_CHECK_IN, checkIn)
 }
