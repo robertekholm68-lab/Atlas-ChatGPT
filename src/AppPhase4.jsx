@@ -1,0 +1,179 @@
+import './phase4.css'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Activity, Archive, ArrowDown, ArrowUp, BarChart3, CalendarDays, Check,
+  ChevronRight, Clipboard, Copy, Download, Dumbbell, FileUp, Flame, GripVertical,
+  HeartPulse, History, Library, ListFilter, MoreHorizontal, Pencil, Play, Plus,
+  QrCode, Search, Share2, Sparkles, Star, Target, Trash2, Trophy, Upload, X
+} from 'lucide-react'
+
+const exerciseBank = [
+  {id:'bench',name:'Bänkpress',muscle:'Bröst',secondary:'Triceps · främre axlar',equipment:'Skivstång',level:'Medel',gym:'Alla gym',score:96,sets:'4 × 6–8'},
+  {id:'row',name:'Sittande rodd',muscle:'Rygg',secondary:'Biceps · bakre axlar',equipment:'Kabel',level:'Nybörjare',gym:'Nordic Wellness',score:94,sets:'4 × 8–10'},
+  {id:'squat',name:'Knäböj',muscle:'Framsida lår',secondary:'Säte · bål',equipment:'Skivstång',level:'Avancerad',gym:'Alla gym',score:98,sets:'4 × 5–8'},
+  {id:'pulldown',name:'Latsdrag',muscle:'Lats',secondary:'Biceps · övre rygg',equipment:'Kabel',level:'Nybörjare',gym:'Fitness24Seven',score:95,sets:'3 × 8–12'},
+  {id:'ohp',name:'Axelpress',muscle:'Axlar',secondary:'Triceps',equipment:'Hantlar',level:'Medel',gym:'Alla gym',score:91,sets:'3 × 8–10'},
+  {id:'legpress',name:'Benpress',muscle:'Framsida lår',secondary:'Säte',equipment:'Maskin',level:'Nybörjare',gym:'Nordic Wellness',score:93,sets:'4 × 10'},
+  {id:'rdl',name:'Raka marklyft',muscle:'Baksida lår',secondary:'Säte · ländrygg',equipment:'Skivstång',level:'Medel',gym:'Alla gym',score:95,sets:'3 × 8'},
+  {id:'curl',name:'Bicepscurl',muscle:'Biceps',secondary:'Underarmar',equipment:'Hantlar',level:'Nybörjare',gym:'Alla gym',score:87,sets:'3 × 10–12'},
+  {id:'pushdown',name:'Triceps pushdown',muscle:'Triceps',secondary:'—',equipment:'Kabel',level:'Nybörjare',gym:'Alla gym',score:90,sets:'3 × 10–12'},
+  {id:'hipthrust',name:'Hip thrust',muscle:'Säte',secondary:'Baksida lår',equipment:'Skivstång',level:'Medel',gym:'Fitness24Seven',score:96,sets:'4 × 8'},
+  {id:'calf',name:'Vadpress',muscle:'Vader',secondary:'—',equipment:'Maskin',level:'Nybörjare',gym:'Nordic Wellness',score:86,sets:'4 × 12–15'},
+  {id:'plank',name:'Planka',muscle:'Bål',secondary:'Axlar',equipment:'Kroppsvikt',level:'Nybörjare',gym:'Alla gym',score:88,sets:'3 × 45 s'}
+]
+
+const defaultPrograms = [
+  {id:'upper-a',name:'Överkropp A',type:'Upper/Lower',days:4,favorite:true,archived:false,exercises:['bench','row','ohp','pulldown','pushdown','curl']},
+  {id:'lower-a',name:'Underkropp A',type:'Upper/Lower',days:4,favorite:true,archived:false,exercises:['squat','rdl','legpress','calf','plank']},
+  {id:'fullbody',name:'Helkropp 50+',type:'Helkropp',days:2,favorite:false,archived:false,exercises:['legpress','bench','row','rdl','ohp','plank']},
+  {id:'push',name:'Push',type:'PPL',days:6,favorite:false,archived:false,exercises:['bench','ohp','pushdown']},
+  {id:'pull',name:'Pull',type:'PPL',days:6,favorite:false,archived:false,exercises:['pulldown','row','curl','rdl']},
+  {id:'legs',name:'Legs',type:'PPL',days:6,favorite:false,archived:false,exercises:['squat','legpress','rdl','calf']}
+]
+
+const demoHistory = [
+  {id:1,date:'2026-07-18',name:'Överkropp A',sets:18,volume:8240,duration:58,gym:'Nordic Wellness'},
+  {id:2,date:'2026-07-16',name:'Underkropp A',sets:17,volume:11260,duration:64,gym:'Fitness24Seven'},
+  {id:3,date:'2026-07-13',name:'Överkropp A',sets:18,volume:7890,duration:55,gym:'Nordic Wellness'},
+  {id:4,date:'2026-07-11',name:'Helkropp 50+',sets:16,volume:9350,duration:61,gym:'Hemmagym'}
+]
+
+const muscleContribution = {
+  bench:{Bröst:1,Triceps:.55,Axlar:.35}, row:{Rygg:1,Biceps:.5,Axlar:.25}, squat:{Ben:1,Säte:.6,Bål:.35},
+  pulldown:{Rygg:1,Biceps:.55}, ohp:{Axlar:1,Triceps:.5}, legpress:{Ben:1,Säte:.45}, rdl:{'Baksida lår':1,Säte:.65,Rygg:.25},
+  curl:{Biceps:1,Underarmar:.35}, pushdown:{Triceps:1}, hipthrust:{Säte:1,'Baksida lår':.45}, calf:{Vader:1}, plank:{Bål:1,Axlar:.2}
+}
+
+function loadState(){
+  try{return JSON.parse(localStorage.getItem('atlas-phase4'))||{}}
+  catch{return {}}
+}
+
+export default function AppPhase4(){
+  const saved=useMemo(loadState,[])
+  const [page,setPage]=useState(saved.page||'dashboard')
+  const [programs,setPrograms]=useState(saved.programs||defaultPrograms)
+  const [history,setHistory]=useState(saved.history||demoHistory)
+  const [activeProgramId,setActiveProgramId]=useState(saved.activeProgramId||'upper-a')
+  const [session,setSession]=useState(saved.session||null)
+  const [toast,setToast]=useState('')
+  const [modal,setModal]=useState(null)
+  const fileInput=useRef(null)
+
+  useEffect(()=>{localStorage.setItem('atlas-phase4',JSON.stringify({page,programs,history,activeProgramId,session}))},[page,programs,history,activeProgramId,session])
+  const notify=m=>{setToast(m);setTimeout(()=>setToast(''),2200)}
+  const startProgram=program=>{
+    const exercises=program.exercises.map(id=>{
+      const ex=exerciseBank.find(x=>x.id===id)
+      const [setCount]=ex.sets.match(/\d+/)||[3]
+      return {...ex,sets:Array.from({length:Number(setCount)},(_,i)=>({id:`${id}-${i}`,kg:previousKg(id),reps:8,rpe:8,done:false}))}
+    })
+    setSession({id:Date.now(),programId:program.id,name:program.name,startedAt:Date.now(),exercises})
+    setPage('session');notify('Pass startat')
+  }
+  const previousKg=id=>({bench:75,row:70,squat:85,pulldown:80,ohp:24,legpress:150,rdl:80,curl:14,pushdown:32,hipthrust:100,calf:70,plank:0}[id]||20)
+  const finishSession=()=>{
+    if(!session)return
+    const sets=session.exercises.flatMap(e=>e.sets).filter(s=>s.done)
+    const volume=sets.reduce((sum,s)=>sum+s.kg*s.reps,0)
+    setHistory(h=>[{id:Date.now(),date:new Date().toISOString().slice(0,10),name:session.name,sets:sets.length,volume:Math.round(volume),duration:Math.max(1,Math.round((Date.now()-session.startedAt)/60000)),gym:'Nordic Wellness'},...h])
+    setSession(null);setPage('history');notify('Pass sparat')
+  }
+  const exportData=()=>{
+    const blob=new Blob([JSON.stringify({programs,history},null,2)],{type:'application/json'})
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='atlas-export.json';a.click();URL.revokeObjectURL(url);notify('Export skapad')
+  }
+  const importData=e=>{
+    const file=e.target.files?.[0];if(!file)return
+    const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(data.programs)setPrograms(data.programs);if(data.history)setHistory(data.history);notify('Data importerad')}catch{notify('Filen kunde inte läsas')}};reader.readAsText(file)
+  }
+
+  const nav=[['dashboard','Översikt',Activity],['programs','Program',Library],['exercises','Övningar',Dumbbell],['calendar','Kalender',CalendarDays],['history','Historik',History],['stats','Statistik',BarChart3]]
+  return <div className="p4-shell">
+    <aside className="p4-sidebar"><div className="p4-brand"><span>A</span><div><strong>ATLAS</strong><small>INTELLIGENT TRAINING</small></div></div><nav>{nav.map(([id,label,Icon])=><button key={id} className={page===id?'active':''} onClick={()=>setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav><div className="p4-side-tools"><button onClick={exportData}><Download size={17}/>Exportera</button><button onClick={()=>fileInput.current?.click()}><Upload size={17}/>Importera</button><input ref={fileInput} type="file" accept="application/json" hidden onChange={importData}/></div></aside>
+    <main className="p4-main"><header className="p4-top"><div><span className="eyebrow">Fas 4</span><h1>{titleFor(page)}</h1><p>{subtitleFor(page)}</p></div><div><button className="p4-icon" onClick={()=>setModal('share')}><Share2 size={19}/></button><button className="p4-primary" onClick={()=>setModal('new-program')}><Plus size={18}/>Nytt program</button></div></header>
+      {page==='dashboard'&&<Dashboard programs={programs} history={history} startProgram={startProgram} setPage={setPage}/>} 
+      {page==='programs'&&<ProgramLibrary programs={programs} setPrograms={setPrograms} activeProgramId={activeProgramId} setActiveProgramId={setActiveProgramId} startProgram={startProgram} notify={notify}/>} 
+      {page==='exercises'&&<ExerciseLibrary notify={notify}/>} 
+      {page==='calendar'&&<CalendarView history={history}/>} 
+      {page==='history'&&<HistoryView history={history}/>} 
+      {page==='stats'&&<StatsView history={history}/>} 
+      {page==='session'&&session&&<LiveSession session={session} setSession={setSession} finishSession={finishSession}/>} 
+    </main>
+    {modal==='new-program'&&<NewProgramModal onClose={()=>setModal(null)} onCreate={p=>{setPrograms(x=>[...x,p]);setModal(null);setActiveProgramId(p.id);setPage('programs');notify('Program skapat')}}/>}
+    {modal==='share'&&<ShareModal programs={programs} onClose={()=>setModal(null)} notify={notify}/>} 
+    {toast&&<div className="p4-toast">{toast}</div>}
+  </div>
+}
+
+const titleFor=p=>({dashboard:'Din träning',programs:'Programbibliotek',exercises:'Övningsbank',calendar:'Träningskalender',history:'Historik',stats:'Statistik',session:'Aktivt pass'}[p]||'ATLAS')
+const subtitleFor=p=>({dashboard:'Allt du behöver för nästa smarta beslut.',programs:'Skapa, redigera och starta dina program.',exercises:'Sök och filtrera bland övningar och maskiner.',calendar:'Se rytm, kontinuitet och planerade pass.',history:'Filtrera och granska genomförda pass.',stats:'Volym, progression och muskelbalans.',session:'Logga varje set utan att lämna vyn.'}[p]||'')
+
+function Dashboard({programs,history,startProgram,setPage}){
+  const week=history.slice(0,4);const volume=week.reduce((s,h)=>s+h.volume,0);const sets=week.reduce((s,h)=>s+h.sets,0)
+  const recommended=programs.find(p=>p.id==='upper-a')||programs[0]
+  return <div className="p4-grid"><section className="p4-hero span8"><div><span className="pill"><Sparkles size={15}/>Smart rekommendation</span><h2>{recommended.name}</h2><p>Bröst och rygg är redo. ATLAS föreslår en liten progression i bänkpress och normal volym i dragövningarna.</p><div className="hero-actions"><button className="p4-primary" onClick={()=>startProgram(recommended)}><Play size={18}/>Starta pass</button><button className="p4-secondary" onClick={()=>setPage('programs')}>Visa upplägg</button></div></div><div className="readiness"><strong>84</strong><span>Redo</span></div></section>
+    <Kpi icon={Dumbbell} label="Pass denna vecka" value={week.length}/><Kpi icon={Flame} label="Total volym" value={`${Math.round(volume/1000)} ton`}/><Kpi icon={Target} label="Arbetsset" value={sets}/><Kpi icon={Trophy} label="Nya PB" value="4"/>
+    <section className="panel span7"><SectionTitle eyebrow="Live från loggen" title="Veckovolym per muskel"/><MuscleVolume compact/></section>
+    <section className="panel span5"><SectionTitle eyebrow="Kommande" title="Veckoplan"/><div className="week-list">{[['Mån','Överkropp A','done'],['Ons','Underkropp A','today'],['Fre','Överkropp B',''],['Sön','Helkropp lätt','']].map(x=><div key={x[0]} className={x[2]}><b>{x[0]}</b><span>{x[1]}</span><small>{x[2]==='done'?'Genomfört':x[2]==='today'?'I dag':'Planerat'}</small></div>)}</div></section>
+  </div>
+}
+
+function ProgramLibrary({programs,setPrograms,activeProgramId,setActiveProgramId,startProgram,notify}){
+  const [filter,setFilter]=useState('alla');const active=programs.find(p=>p.id===activeProgramId)||programs[0]
+  const visible=programs.filter(p=>filter==='arkiv'?p.archived:!p.archived&&(filter==='favorit'?p.favorite:true))
+  const update=(id,patch)=>setPrograms(ps=>ps.map(p=>p.id===id?{...p,...patch}:p))
+  const move=(index,dir)=>{const next=[...active.exercises];const target=index+dir;if(target<0||target>=next.length)return;[next[index],next[target]]=[next[target],next[index]];update(active.id,{exercises:next})}
+  const removeExercise=id=>update(active.id,{exercises:active.exercises.filter(x=>x!==id)})
+  const addExercise=id=>{if(!active.exercises.includes(id))update(active.id,{exercises:[...active.exercises,id]})}
+  return <div className="program-layout"><section className="panel program-list"><div className="toolbar"><div className="segmented">{[['alla','Aktiva'],['favorit','Favoriter'],['arkiv','Arkiv']].map(([id,l])=><button key={id} className={filter===id?'active':''} onClick={()=>setFilter(id)}>{l}</button>)}</div></div><div className="program-cards">{visible.map(p=><button key={p.id} className={activeProgramId===p.id?'selected':''} onClick={()=>setActiveProgramId(p.id)}><span className="program-icon"><Dumbbell size={20}/></span><span><strong>{p.name}</strong><small>{p.type} · {p.exercises.length} övningar</small></span>{p.favorite&&<Star size={16} fill="currentColor"/>}<ChevronRight size={17}/></button>)}</div></section>
+    {active&&<section className="panel program-editor"><div className="editor-head"><div><span className="eyebrow">Programeditor</span><input value={active.name} onChange={e=>update(active.id,{name:e.target.value})}/><p>{active.type} · {active.days} dagar/vecka</p></div><div><button className="p4-icon" onClick={()=>update(active.id,{favorite:!active.favorite})}><Star size={18} fill={active.favorite?'currentColor':'none'}/></button><button className="p4-icon" onClick={()=>update(active.id,{archived:!active.archived})}><Archive size={18}/></button><button className="p4-primary" onClick={()=>startProgram(active)}><Play size={17}/>Starta</button></div></div>
+      <div className="editor-list">{active.exercises.map((id,i)=>{const ex=exerciseBank.find(x=>x.id===id);return <div key={id}><GripVertical size={18}/><span><strong>{ex.name}</strong><small>{ex.muscle} · {ex.sets}</small></span><div className="move-buttons"><button onClick={()=>move(i,-1)}><ArrowUp size={15}/></button><button onClick={()=>move(i,1)}><ArrowDown size={15}/></button><button onClick={()=>removeExercise(id)}><Trash2 size={15}/></button></div></div>})}</div>
+      <details className="add-exercise"><summary><Plus size={17}/>Lägg till övning</summary><div>{exerciseBank.filter(e=>!active.exercises.includes(e.id)).map(e=><button key={e.id} onClick={()=>{addExercise(e.id);notify(`${e.name} tillagd`)}}><span><strong>{e.name}</strong><small>{e.muscle}</small></span><Plus size={16}/></button>)}</div></details>
+    </section>}
+  </div>
+}
+
+function ExerciseLibrary({notify}){
+  const [query,setQuery]=useState('');const [muscle,setMuscle]=useState('Alla');const [equipment,setEquipment]=useState('Alla');const [selected,setSelected]=useState(exerciseBank[0])
+  const filtered=exerciseBank.filter(e=>(e.name+e.muscle+e.secondary).toLowerCase().includes(query.toLowerCase())&&(muscle==='Alla'||e.muscle===muscle)&&(equipment==='Alla'||e.equipment===equipment))
+  return <div className="exercise-layout"><section className="panel exercise-browser"><div className="search-box"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Sök övning, muskel eller maskin"/></div><div className="filter-selects"><select value={muscle} onChange={e=>setMuscle(e.target.value)}>{['Alla',...new Set(exerciseBank.map(e=>e.muscle))].map(x=><option key={x}>{x}</option>)}</select><select value={equipment} onChange={e=>setEquipment(e.target.value)}>{['Alla',...new Set(exerciseBank.map(e=>e.equipment))].map(x=><option key={x}>{x}</option>)}</select></div><div className="exercise-results">{filtered.map(e=><button key={e.id} className={selected.id===e.id?'selected':''} onClick={()=>setSelected(e)}><span className="score">{e.score}</span><span><strong>{e.name}</strong><small>{e.muscle} · {e.equipment}</small></span><ChevronRight size={17}/></button>)}</div></section>
+    <section className="panel exercise-detail"><div className="exercise-visual"><Dumbbell size={62}/><span>START</span><span>SLUT</span></div><span className="pill">Exercise Score {selected.score}%</span><h2>{selected.name}</h2><p>{selected.muscle} · sekundärt: {selected.secondary}</p><div className="detail-grid"><div><span>Utrustning</span><strong>{selected.equipment}</strong></div><div><span>Nivå</span><strong>{selected.level}</strong></div><div><span>Standard</span><strong>{selected.sets}</strong></div><div><span>Finns på</span><strong>{selected.gym}</strong></div></div><div className="instruction"><h3>Utförande</h3><ol><li>Ställ in en stabil startposition.</li><li>Kontrollera den excentriska fasen.</li><li>Arbeta genom full, smärtfri rörelse.</li></ol><h3>Vanligt fel</h3><p>För hög belastning som förkortar rörelsen och flyttar arbetet från målmuskel.</p></div><button className="p4-primary full" onClick={()=>notify('Övningen tillagd i favoriter')}><Star size={17}/>Spara övning</button></section>
+  </div>
+}
+
+function LiveSession({session,setSession,finishSession}){
+  const [activeIndex,setActiveIndex]=useState(0);const active=session.exercises[activeIndex]
+  const allSets=session.exercises.flatMap(e=>e.sets);const done=allSets.filter(s=>s.done).length
+  const updateSet=(si,patch)=>setSession(s=>({...s,exercises:s.exercises.map((e,ei)=>ei!==activeIndex?e:{...e,sets:e.sets.map((set,i)=>i===si?{...set,...patch}:set)})}))
+  const load=useMemo(()=>{
+    const result={};session.exercises.forEach(e=>e.sets.filter(s=>s.done).forEach(s=>Object.entries(muscleContribution[e.id]||{}).forEach(([m,w])=>result[m]=(result[m]||0)+w)))
+    return result
+  },[session])
+  return <div className="session-layout"><section className="panel session-main"><div className="session-head"><div><span className="pill"><Flame size={15}/>Aktivt pass</span><h2>{session.name}</h2><p>Övning {activeIndex+1} av {session.exercises.length} · {done}/{allSets.length} set klara</p></div><button className="p4-primary" disabled={!done} onClick={finishSession}><Check size={17}/>Avsluta</button></div><div className="session-tabs">{session.exercises.map((e,i)=><button key={e.id} className={i===activeIndex?'active':''} onClick={()=>setActiveIndex(i)}>{i+1}</button>)}</div><div className="active-exercise"><div><span className="eyebrow">Nu</span><h3>{active.name}</h3><p>Förra passet: {previousPerformance(active.id)}</p></div><div className="progression-card"><Sparkles size={20}/><span><strong>ATLAS föreslår</strong><small>{progressionSuggestion(active.id)}</small></span></div></div><div className="set-log"><div className="set-row head"><span>Set</span><span>Kg</span><span>Reps</span><span>RPE</span><span>Klar</span></div>{active.sets.map((s,i)=><div className={`set-row ${s.done?'done':''}`} key={s.id}><b>{i+1}</b><input type="number" value={s.kg} onChange={e=>updateSet(i,{kg:Number(e.target.value)})}/><input type="number" value={s.reps} onChange={e=>updateSet(i,{reps:Number(e.target.value)})}/><select value={s.rpe} onChange={e=>updateSet(i,{rpe:Number(e.target.value)})}>{[6,7,8,9,10].map(v=><option key={v}>{v}</option>)}</select><button onClick={()=>updateSet(i,{done:!s.done})}>{s.done?<Check size={18}/>:<span/>}</button></div>)}</div><div className="session-nav"><button className="p4-secondary" disabled={activeIndex===0} onClick={()=>setActiveIndex(i=>i-1)}>Föregående</button><button className="p4-primary" disabled={activeIndex===session.exercises.length-1} onClick={()=>setActiveIndex(i=>i+1)}>Nästa övning</button></div></section><aside className="panel session-side"><SectionTitle eyebrow="Live" title="Muskelbelastning"/><MuscleVolume live={load}/><div className="recovery-live"><HeartPulse size={22}/><span><strong>Återhämtning uppdateras</strong><small>Belastningen förs direkt till kroppskartan.</small></span></div></aside></div>
+}
+
+const previousPerformance=id=>({bench:'75 × 8, 8, 7',row:'70 × 10, 9, 9',squat:'85 × 6, 6, 5'}[id]||'Stabil prestation')
+const progressionSuggestion=id=>({bench:'77,5 kg × 6–8',row:'72,5 kg × 8–10',squat:'87,5 kg × 5–7'}[id]||'Behåll vikt och lägg till 1 repetition')
+
+function MuscleVolume({compact=false,live={}}){
+  const defaults={Bröst:12,Rygg:16,Axlar:10,Triceps:9,Biceps:8,Ben:14,Säte:9,Bål:6,Vader:5};const data=Object.keys(live).length?live:defaults
+  return <div className={`muscle-volume ${compact?'compact':''}`}>{Object.entries(data).map(([m,v])=><div key={m}><span>{m}</span><div><i style={{width:`${Math.min(100,(v/18)*100)}%`}}/></div><b>{Number(v).toFixed(Number(v)%1?1:0)} set</b></div>)}</div>
+}
+
+function CalendarView({history}){
+  const days=Array.from({length:31},(_,i)=>i+1);const trained=new Set(history.map(h=>Number(h.date.slice(-2))))
+  return <div className="p4-grid"><section className="panel span8"><SectionTitle eyebrow="Juli 2026" title="Träningskalender"/><div className="calendar-grid">{['M','T','O','T','F','L','S'].map((d,i)=><b key={i}>{d}</b>)}{days.map(d=><button key={d} className={trained.has(d)?'trained':''}><span>{d}</span>{trained.has(d)&&<i/>}</button>)}</div></section><section className="panel span4"><SectionTitle eyebrow="Kontinuitet" title="Denna månad"/><div className="calendar-kpis"><KpiMini value="12" label="Pass"/><KpiMini value="82%" label="Följsamhet"/><KpiMini value="4" label="Veckor i rad"/></div></section></div>
+}
+
+function HistoryView({history}){const [q,setQ]=useState('');const filtered=history.filter(h=>(h.name+h.gym+h.date).toLowerCase().includes(q.toLowerCase()));return <section className="panel"><div className="history-toolbar"><SectionTitle eyebrow="Alla pass" title="Träningshistorik"/><div className="search-box small"><Search size={17}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Filtrera historik"/></div></div><div className="history-table"><div className="history-row head"><span>Datum</span><span>Pass</span><span>Gym</span><span>Set</span><span>Volym</span><span>Tid</span></div>{filtered.map(h=><div className="history-row" key={h.id}><span>{h.date}</span><strong>{h.name}</strong><span>{h.gym}</span><span>{h.sets}</span><span>{h.volume.toLocaleString('sv-SE')} kg</span><span>{h.duration} min</span></div>)}</div></section>}
+
+function StatsView({history}){const volume=history.reduce((s,h)=>s+h.volume,0);return <div className="p4-grid"><Kpi icon={Dumbbell} label="Totalt antal pass" value={history.length}/><Kpi icon={Flame} label="Total volym" value={`${Math.round(volume/1000)} ton`}/><Kpi icon={Trophy} label="Personbästa" value="11"/><Kpi icon={Activity} label="Träningsdagar" value="18"/><section className="panel span7"><SectionTitle eyebrow="8 veckor" title="Volymutveckling"/><div className="bar-chart">{[42,48,55,51,63,68,74,82].map((h,i)=><div key={i}><span style={{height:`${h}%`}}/><small>V{i+1}</small></div>)}</div></section><section className="panel span5"><SectionTitle eyebrow="Balans" title="Muskelgrupper"/><MuscleVolume compact/></section><section className="panel span12"><SectionTitle eyebrow="Smart progression" title="Nästa rekommenderade höjningar"/><div className="recommendations">{[['Bänkpress','75 → 77,5 kg','Två pass inom målreps'],['Sittande rodd','70 → 72,5 kg','RPE under 8,5'],['Benpress','150 → 155 kg','Alla set genomförda']].map(r=><div key={r[0]}><Sparkles size={20}/><span><strong>{r[0]}</strong><small>{r[2]}</small></span><b>{r[1]}</b><button>Acceptera</button></div>)}</div></section></div>}
+
+function NewProgramModal({onClose,onCreate}){const [name,setName]=useState('Mitt program');const [type,setType]=useState('Eget');return <div className="modal-backdrop"><div className="p4-modal"><button className="modal-x" onClick={onClose}><X size={18}/></button><Dumbbell size={36}/><h2>Nytt träningsprogram</h2><label>Namn<input value={name} onChange={e=>setName(e.target.value)}/></label><label>Upplägg<select value={type} onChange={e=>setType(e.target.value)}>{['Eget','Upper/Lower','Push Pull Legs','Helkropp','Bro Split'].map(x=><option key={x}>{x}</option>)}</select></label><button className="p4-primary full" onClick={()=>onCreate({id:`custom-${Date.now()}`,name,type,days:3,favorite:false,archived:false,exercises:['bench','row','squat']})}>Skapa program</button></div></div>}
+
+function ShareModal({programs,onClose,notify}){const [selected,setSelected]=useState(programs[0]?.id);const program=programs.find(p=>p.id===selected);const code=`ATLAS-${program?.id?.toUpperCase()||'PROGRAM'}`;const copy=()=>{navigator.clipboard?.writeText(code);notify('Delningskod kopierad')};return <div className="modal-backdrop"><div className="p4-modal share-modal"><button className="modal-x" onClick={onClose}><X size={18}/></button><QrCode size={38}/><h2>Dela träningsprogram</h2><select value={selected} onChange={e=>setSelected(e.target.value)}>{programs.filter(p=>!p.archived).map(p=><option value={p.id} key={p.id}>{p.name}</option>)}</select><div className="fake-qr">{Array.from({length:49},(_,i)=><i key={i} className={(i*7+i%5)%3===0?'on':''}/>)}</div><code>{code}</code><button className="p4-primary full" onClick={copy}><Copy size={17}/>Kopiera delningskod</button></div></div>}
+
+function Kpi({icon:Icon,label,value}){return <article className="p4-kpi span3"><Icon size={20}/><span>{label}</span><strong>{value}</strong></article>}
+function KpiMini({value,label}){return <div><strong>{value}</strong><span>{label}</span></div>}
+function SectionTitle({eyebrow,title}){return <div className="section-title"><span>{eyebrow}</span><h3>{title}</h3></div>}
