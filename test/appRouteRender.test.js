@@ -63,3 +63,23 @@ test('phase 4 primary pages render without route-level runtime errors', async ()
     await cleanup()
   }
 })
+
+
+test('phase 4 Recovery route renders with primary app navigation intact', async () => {
+  const { modulePath, cleanup } = await bundle('src/AppPhase4.jsx')
+  try {
+    const { default: AppPhase4 } = await import(modulePath)
+    globalThis.localStorage = storageWith({ 'atlas-phase4': JSON.stringify({ page: 'recovery' }) })
+    const html = renderToString(React.createElement(AppPhase4))
+    for (const label of ['Home', 'Workout', 'Recovery', 'AI Coach', 'Food', 'Progress']) {
+      assert.match(html, new RegExp(`>${label}<`))
+    }
+    assert.match(html, /Recovery command center/)
+    assert.match(html, /Recovery forecast/)
+    assert.match(html, /Muscle readiness/)
+    assert.doesNotMatch(html, /undefined|null|NaN/)
+  } finally {
+    delete globalThis.localStorage
+    await cleanup()
+  }
+})
