@@ -1,5 +1,6 @@
 import { getAtlasState, setAtlasState } from './atlasStore'
 import { applyWorkoutToRecovery, recoveryScore } from './recoveryEngine'
+import { evaluateAtlasDecisions } from './decisionEngine'
 
 export const ATLAS_EVENTS = {
   WORKOUT_FINISHED: 'workout.finished',
@@ -26,7 +27,7 @@ function normalizeWorkout(payload) {
       id: `inferred-${payload.id}`,
       name: payload.name,
       muscleContribution: contribution,
-      sets: Array.from({ length: completedSets }, (_, index) => ({ id: index, done: true, rpe: 8 }))
+      sets: Array.from({ length: completedSets }, (_, index) => ({ id: index, done: true, reps: 8, rpe: 8 }))
     }]
   }
 }
@@ -35,6 +36,18 @@ function workoutTimestamp(workout) {
   if (workout.completedAt) return new Date(workout.completedAt).getTime()
   if (workout.date) return new Date(`${workout.date}T18:00:00`).getTime()
   return Date.now()
+}
+
+function attachDecisions(state, context) {
+  const result = evaluateAtlasDecisions(state, context)
+  return {
+    ...state,
+    decisions: {
+      current: result.current,
+      history: [...result.generated, ...(state.decisions?.history || [])].slice(0, 250),
+      logs: [result.log, ...(state.decisions?.logs || [])].slice(0, 100)
+    }
+  }
 }
 
 export function dispatchAtlasEvent(type, payload = {}) {
@@ -54,17 +67,19 @@ export function dispatchAtlasEvent(type, payload = {}) {
     const muscles = applyWorkoutToRecovery(current.recovery?.muscles, workout, workoutTimestamp(workout))
     next = {
       ...next,
-      workouts: [payload, ...(current.workouts || [])].slice(0, 500),
+      workouts: [workout, ...(current.workouts || [])].slice(0, 500),
       recovery: {
         muscles,
         score: recoveryScore(muscles, Date.now()),
         updatedAt: event.createdAt
       }
     }
+    next = attachDecisions(next, { trigger: type, workout })
   }
 
   if (type === ATLAS_EVENTS.PROFILE_UPDATED) {
     next = { ...next, profile: { ...(current.profile || {}), ...payload } }
+    next = attachDecisions(next, { trigger: type })
   }
 
   if (type === ATLAS_EVENTS.GOAL_UPDATED) {
@@ -73,6 +88,7 @@ export function dispatchAtlasEvent(type, payload = {}) {
     if (index >= 0) goals[index] = { ...goals[index], ...payload }
     else goals.unshift(payload)
     next = { ...next, goals }
+    next = attachDecisions(next, { trigger: type })
   }
 
   setAtlasState(next)
