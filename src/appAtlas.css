@@ -44,7 +44,20 @@
   outline-offset: 2px;
 }
 
-@media (max-width: 640px) {
+.atlas-core-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 13px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
   .atlas-module-switch {
     top: 8px;
   }
@@ -53,5 +66,16 @@
     min-height: 34px;
     padding: 0 11px;
     font-size: 0.78rem;
+  }
+
+  .atlas-core-status {
+    min-height: 34px;
+    padding: 0 9px;
+    font-size: 0;
+  }
+
+  .atlas-core-status::after {
+    content: attr(title);
+    display: none;
   }
 }
