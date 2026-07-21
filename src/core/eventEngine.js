@@ -1,6 +1,7 @@
 import { getAtlasState, setAtlasState } from './atlasStore'
 import { applyWorkoutToRecovery, recoveryScore } from './recoveryEngine'
 import { evaluateAtlasDecisions } from './decisionEngine'
+import { evaluateGoalPlan, normalizeGoal } from './goalEngine'
 
 export const ATLAS_EVENTS = {
   WORKOUT_FINISHED: 'workout.finished',
@@ -83,12 +84,22 @@ export function dispatchAtlasEvent(type, payload = {}) {
   }
 
   if (type === ATLAS_EVENTS.GOAL_UPDATED) {
+    const goal = normalizeGoal(payload)
     const goals = [...(current.goals || [])]
-    const index = goals.findIndex(goal => goal.id === payload.id)
-    if (index >= 0) goals[index] = { ...goals[index], ...payload }
-    else goals.unshift(payload)
-    next = { ...next, goals }
-    next = attachDecisions(next, { trigger: type })
+    const index = goals.findIndex(item => item.id === goal.id)
+    if (index >= 0) goals[index] = { ...goals[index], ...goal }
+    else goals.unshift(goal)
+
+    const plan = evaluateGoalPlan(goal, { ...current, goals })
+    next = {
+      ...next,
+      goals,
+      goalPlans: {
+        active: plan,
+        history: [plan, ...(current.goalPlans?.history || [])].slice(0, 100)
+      }
+    }
+    next = attachDecisions(next, { trigger: type, goal, goalPlan: plan })
   }
 
   setAtlasState(next)
@@ -97,4 +108,8 @@ export function dispatchAtlasEvent(type, payload = {}) {
 
 export function recordCompletedWorkout(workout) {
   return dispatchAtlasEvent(ATLAS_EVENTS.WORKOUT_FINISHED, workout)
+}
+
+export function updateAtlasGoal(goal) {
+  return dispatchAtlasEvent(ATLAS_EVENTS.GOAL_UPDATED, goal)
 }
