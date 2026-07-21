@@ -1,9 +1,10 @@
 const STORAGE_KEY = 'atlas-core-v1'
 
 const defaultState = {
-  version: 2,
+  version: 3,
   profile: {},
   goals: [],
+  goalPlans: { active: null, history: [] },
   workouts: [],
   recovery: { muscles: {}, score: 100, updatedAt: null },
   coach: { memories: [], insights: [] },
@@ -28,9 +29,11 @@ function loadState() {
     return {
       ...cloneDefaultState(),
       ...saved,
+      version: defaultState.version,
       recovery: { ...defaultState.recovery, ...(saved.recovery || {}) },
       coach: { ...defaultState.coach, ...(saved.coach || {}) },
-      decisions: { ...defaultState.decisions, ...(saved.decisions || {}) }
+      decisions: { ...defaultState.decisions, ...(saved.decisions || {}) },
+      goalPlans: { ...defaultState.goalPlans, ...(saved.goalPlans || {}) }
     }
   } catch {
     return cloneDefaultState()
