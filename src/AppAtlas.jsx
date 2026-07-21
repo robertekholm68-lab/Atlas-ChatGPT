@@ -4,6 +4,7 @@ import AppPhase4 from './AppPhase4'
 import AppIntelligence from './AppIntelligence'
 import { getAtlasState, subscribeAtlas } from './core/atlasStore'
 import { recordCompletedWorkout } from './core/eventEngine'
+import { installPhase4Bridge } from './core/phase4Bridge'
 import './appAtlas.css'
 
 const STORAGE_KEY = 'atlas-active-module-v1'
@@ -31,11 +32,12 @@ export default function AppAtlas() {
 
   useEffect(() => {
     importLegacyWorkouts()
+    const uninstallBridge = installPhase4Bridge()
     const unsubscribe = subscribeAtlas(setCore)
-    const bridge = window.setInterval(importLegacyWorkouts, 1000)
+
     return () => {
+      uninstallBridge()
       unsubscribe()
-      window.clearInterval(bridge)
     }
   }, [])
 
@@ -69,7 +71,7 @@ export default function AppAtlas() {
           <Bot size={18} />
           <span>Coach</span>
         </button>
-        <span className="atlas-core-status" title="Beräknas lokalt från träningshistoriken">
+        <span className="atlas-core-status" title="Beräknas lokalt från genomförda set och RPE">
           <HeartPulse size={16} />
           Återhämtning {recovery}%
         </span>
