@@ -7,6 +7,30 @@ export const ATLAS_EVENTS = {
   GOAL_UPDATED: 'goal.updated'
 }
 
+const inferredPrograms = {
+  'Överkropp A': { Bröst: 1, Rygg: 1, Axlar: .7, Triceps: .55, Biceps: .55 },
+  'Underkropp A': { Ben: 1, 'Baksida lår': .75, Säte: .75, Bål: .35, Vader: .35 },
+  'Helkropp 50+': { Bröst: .6, Rygg: .7, Axlar: .45, Ben: .75, 'Baksida lår': .55, Säte: .5, Bål: .35 },
+  Push: { Bröst: 1, Axlar: .8, Triceps: .75 },
+  Pull: { Rygg: 1, Biceps: .75, 'Baksida lår': .35 },
+  Legs: { Ben: 1, 'Baksida lår': .8, Säte: .8, Vader: .45 }
+}
+
+function normalizeWorkout(payload) {
+  if (payload.exercises?.length) return payload
+  const contribution = inferredPrograms[payload.name] || { Bål: .2 }
+  const completedSets = Math.max(1, Number(payload.sets || 1))
+  return {
+    ...payload,
+    exercises: [{
+      id: `inferred-${payload.id}`,
+      name: payload.name,
+      muscleContribution: contribution,
+      sets: Array.from({ length: completedSets }, (_, index) => ({ id: index, done: true, rpe: 8 }))
+    }]
+  }
+}
+
 export function dispatchAtlasEvent(type, payload = {}) {
   const event = {
     id: `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -19,7 +43,9 @@ export function dispatchAtlasEvent(type, payload = {}) {
   let next = { ...current, events: [event, ...(current.events || [])].slice(0, 250) }
 
   if (type === ATLAS_EVENTS.WORKOUT_FINISHED) {
-    const muscles = applyWorkoutToRecovery(current.recovery?.muscles, payload)
+    if ((current.workouts || []).some(workout => String(workout.id) === String(payload.id))) return null
+    const workout = normalizeWorkout(payload)
+    const muscles = applyWorkoutToRecovery(current.recovery?.muscles, workout)
     next = {
       ...next,
       workouts: [payload, ...(current.workouts || [])].slice(0, 500),
