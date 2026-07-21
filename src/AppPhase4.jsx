@@ -5,7 +5,7 @@ import {
   Activity, Apple, Archive, ArrowDown, ArrowUp, BarChart3, Bot, CalendarDays, Check,
   ChevronRight, Clipboard, Copy, Download, Dumbbell, FileUp, Flame, GripVertical,
   HeartPulse, History, Library, Moon, ListFilter, MoreHorizontal, Pencil, Play, Plus,
-  QrCode, Search, Share2, Sparkles, Star, Target, Trash2, Utensils, Trophy, Upload, X
+  QrCode, Search, Share2, Sparkles, Star, Target, Trash2, Utensils, Trophy, Upload, X, Clock, Pause, SkipForward
 } from 'lucide-react'
 
 const exerciseBank = [
@@ -59,9 +59,10 @@ export default function AppPhase4(){
   const [session,setSession]=useState(saved.session||null)
   const [toast,setToast]=useState('')
   const [modal,setModal]=useState(null)
+  const [completedWorkout,setCompletedWorkout]=useState(saved.completedWorkout||null)
   const fileInput=useRef(null)
 
-  useEffect(()=>{localStorage.setItem('atlas-phase4',JSON.stringify({page,programs,history,activeProgramId,session}))},[page,programs,history,activeProgramId,session])
+  useEffect(()=>{localStorage.setItem('atlas-phase4',JSON.stringify({page,programs,history,activeProgramId,session,completedWorkout}))},[page,programs,history,activeProgramId,session,completedWorkout])
   const notify=m=>{setToast(m);setTimeout(()=>setToast(''),2200)}
   const startProgram=program=>{
     const exercises=program.exercises.map(id=>{
@@ -77,7 +78,9 @@ export default function AppPhase4(){
     if(!session)return
     const sets=session.exercises.flatMap(e=>e.sets).filter(s=>s.done)
     const volume=sets.reduce((sum,s)=>sum+s.kg*s.reps,0)
-    setHistory(h=>[{id:Date.now(),date:new Date().toISOString().slice(0,10),name:session.name,sets:sets.length,volume:Math.round(volume),duration:Math.max(1,Math.round((Date.now()-session.startedAt)/60000)),gym:'Nordic Wellness'},...h])
+    const completed={id:Date.now(),date:new Date().toISOString().slice(0,10),name:session.name,sets:sets.length,volume:Math.round(volume),duration:Math.max(1,Math.round((Date.now()-session.startedAt)/60000)),gym:'Nordic Wellness',prs:Math.min(3,Math.max(1,sets.filter(s=>s.rpe>=9).length)),calories:Math.round(sets.length*18+volume/95),recovery:sets.length>14?'36–42 timmar':'24–30 timmar'}
+    setHistory(h=>[completed,...h])
+    setCompletedWorkout(completed)
     setSession(null);setPage('history');notify('Pass sparat')
   }
   const exportData=()=>{
@@ -94,12 +97,12 @@ export default function AppPhase4(){
   return <div className="p4-shell">
     <aside className="p4-sidebar"><div className="p4-brand"><span>A</span><div><strong>ATLAS</strong><small>INTELLIGENT TRAINING</small></div></div><nav>{nav.map(([id,label,Icon])=><button key={id} className={page===id?'active':''} onClick={()=> id==='session' && !session ? setPage('programs') : setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav><div className="p4-side-tools"><button onClick={exportData}><Download size={17}/>Exportera</button><button onClick={()=>fileInput.current?.click()}><Upload size={17}/>Importera</button><input ref={fileInput} type="file" accept="application/json" hidden onChange={importData}/></div></aside>
     <main className="p4-main"><header className="p4-top"><div><span className="eyebrow">Fas 4</span><h1>{titleFor(page)}</h1><p>{subtitleFor(page)}</p></div><div><button className="p4-icon" onClick={()=>setModal('share')}><Share2 size={19}/></button><button className="p4-primary" onClick={()=>setModal('new-program')}><Plus size={18}/>Nytt program</button></div></header>
-      {page==='dashboard'&&<Dashboard programs={programs} history={history} startProgram={startProgram} setPage={setPage}/>} 
-      {page==='programs'&&<ProgramLibrary programs={programs} setPrograms={setPrograms} activeProgramId={activeProgramId} setActiveProgramId={setActiveProgramId} startProgram={startProgram} notify={notify}/>} 
-      {page==='exercises'&&<ExerciseLibrary notify={notify}/>} 
-      {page==='calendar'&&<CalendarView history={history}/>} 
-      {page==='history'&&<HistoryView history={history}/>} 
-      {page==='stats'&&<StatsView history={history}/>} 
+      {page==='dashboard'&&<Dashboard programs={programs} history={history} startProgram={startProgram} setPage={setPage}/>}
+      {page==='programs'&&<ProgramLibrary programs={programs} setPrograms={setPrograms} activeProgramId={activeProgramId} setActiveProgramId={setActiveProgramId} startProgram={startProgram} notify={notify}/>}
+      {page==='exercises'&&<ExerciseLibrary notify={notify}/>}
+      {page==='calendar'&&<CalendarView history={history}/>}
+      {page==='history'&&<HistoryView history={history} completedWorkout={completedWorkout}/>}
+      {page==='stats'&&<StatsView history={history}/>}
       {page==='food'&&<FoodView notify={notify}/>}
       {page==='progress'&&<StatsView history={history}/>}
       {page==='recovery'&&<RecoveryView/>}
@@ -109,7 +112,7 @@ export default function AppPhase4(){
       <BottomNavigation items={bottomNavItems} active={page} onChange={id=> id==='session' && !session ? setPage('programs') : setPage(id)} />
     </main>
     {modal==='new-program'&&<NewProgramModal onClose={()=>setModal(null)} onCreate={p=>{setPrograms(x=>[...x,p]);setModal(null);setActiveProgramId(p.id);setPage('programs');notify('Program skapat')}}/>}
-    {modal==='share'&&<ShareModal programs={programs} onClose={()=>setModal(null)} notify={notify}/>} 
+    {modal==='share'&&<ShareModal programs={programs} onClose={()=>setModal(null)} notify={notify}/>}
     {toast&&<div className="p4-toast">{toast}</div>}
   </div>
 }
@@ -151,25 +154,31 @@ function ExerciseLibrary({notify}){
 }
 
 function LiveSession({session,setSession,finishSession}){
-  const [activeIndex,setActiveIndex]=useState(0);const active=session.exercises[activeIndex]
+  const [activeIndex,setActiveIndex]=useState(0)
+  const [restSeconds,setRestSeconds]=useState(75)
+  const [restPaused,setRestPaused]=useState(false)
+  const active=session.exercises[activeIndex]
   const allSets=session.exercises.flatMap(e=>e.sets);const done=allSets.filter(s=>s.done).length
+  const total=allSets.length;const remaining=total-done
+  const elapsedMinutes=Math.max(1,Math.round((Date.now()-session.startedAt)/60000))
+  const eta=new Date(Date.now()+Math.max(8,remaining*3)*60000).toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'})
+  const activeDone=active.sets.filter(s=>s.done).length
+  useEffect(()=>{if(restPaused||restSeconds<=0)return;const id=setInterval(()=>setRestSeconds(v=>Math.max(0,v-1)),1000);return()=>clearInterval(id)},[restPaused,restSeconds])
   const updateSet=(si,patch)=>setSession(s=>({...s,exercises:s.exercises.map((e,ei)=>ei!==activeIndex?e:{...e,sets:e.sets.map((set,i)=>i===si?{...set,...patch}:set)})}))
-  const load=useMemo(()=>{
-    const result={};session.exercises.forEach(e=>e.sets.filter(s=>s.done).forEach(s=>Object.entries(muscleContribution[e.id]||{}).forEach(([m,w])=>result[m]=(result[m]||0)+w)))
-    return result
-  },[session])
-  return <div className="session-layout"><section className="panel session-main"><div className="session-head"><div><span className="pill"><Flame size={15}/>Aktivt pass</span><h2>{session.name}</h2><p>Övning {activeIndex+1} av {session.exercises.length} · {done}/{allSets.length} set klara</p></div><button className="p4-primary" disabled={!done} onClick={finishSession}><Check size={17}/>Avsluta</button></div><div className="session-tabs">{session.exercises.map((e,i)=><button key={e.id} className={i===activeIndex?'active':''} onClick={()=>setActiveIndex(i)}>{i+1}</button>)}</div><div className="active-exercise"><div><span className="eyebrow">Nu</span><h3>{active.name}</h3><p>Förra passet: {previousPerformance(active.id)}</p></div><div className="progression-card"><Sparkles size={20}/><span><strong>ATLAS föreslår</strong><small>{progressionSuggestion(active.id)}</small></span></div></div><div className="set-log"><div className="set-row head"><span>Set</span><span>Kg</span><span>Reps</span><span>RPE</span><span>Klar</span></div>{active.sets.map((s,i)=><div className={`set-row ${s.done?'done':''}`} key={s.id}><b>{i+1}</b><input type="number" value={s.kg} onChange={e=>updateSet(i,{kg:Number(e.target.value)})}/><input type="number" value={s.reps} onChange={e=>updateSet(i,{reps:Number(e.target.value)})}/><select value={s.rpe} onChange={e=>updateSet(i,{rpe:Number(e.target.value)})}>{[6,7,8,9,10].map(v=><option key={v}>{v}</option>)}</select><button onClick={()=>updateSet(i,{done:!s.done})}>{s.done?<Check size={18}/>:<span/>}</button></div>)}</div><div className="session-nav"><button className="p4-secondary" disabled={activeIndex===0} onClick={()=>setActiveIndex(i=>i-1)}>Föregående</button><button className="p4-primary" disabled={activeIndex===session.exercises.length-1} onClick={()=>setActiveIndex(i=>i+1)}>Nästa övning</button></div></section><aside className="panel session-side"><SectionTitle eyebrow="Live" title="Muskelbelastning"/><MuscleVolume live={load}/><div className="recovery-live"><HeartPulse size={22}/><span><strong>Återhämtning uppdateras</strong><small>Belastningen förs direkt till kroppskartan.</small></span></div></aside></div>
+  const toggleDone=(i,set)=>{updateSet(i,{done:!set.done});if(!set.done){setRestSeconds(90);setRestPaused(false)}}
+  const load=useMemo(()=>{const result={};session.exercises.forEach(e=>e.sets.filter(s=>s.done).forEach(s=>Object.entries(muscleContribution[e.id]||{}).forEach(([m,w])=>result[m]=(result[m]||0)+w)));return result},[session])
+  return <div className="premium-session"><section className="panel session-main premium-workout-card"><div className="session-head premium-session-head"><div><span className="pill"><Flame size={15}/>Aktivt premium-pass</span><h2>{session.name}</h2><p>Övning {activeIndex+1} av {session.exercises.length} · {done}/{total} set klara · startade för {elapsedMinutes} min sedan</p></div><button className="p4-primary finish-workout" disabled={!done} onClick={finishSession}><Check size={17}/>Avsluta pass</button></div><div className="workout-progress-strip" aria-label="Passprogress"><div><strong>{done}</strong><span>klara set</span></div><div><strong>{remaining}</strong><span>kvar</span></div><div><strong>{eta}</strong><span>klar cirka</span></div><div className="progress-track"><i style={{width:`${Math.round(done/total*100)}%`}}/></div></div><div className="exercise-pills">{session.exercises.map((e,i)=><button key={e.id} className={`${i===activeIndex?'active':''} ${e.sets.every(s=>s.done)?'complete':''}`} onClick={()=>setActiveIndex(i)} aria-label={`Gå till ${e.name}`}>{i+1}<small>{e.name}</small></button>)}</div><article className="exercise-card-premium"><div className="exercise-title-row"><div><span className="eyebrow">{active.muscle} · målmuskel</span><h3>{active.name}</h3><p>Förra passet: {previousPerformance(active.id)}</p></div><div className="exercise-completion"><ProgressRing value={Math.round(activeDone/active.sets.length*100)} label="övning" size={92}/></div></div><div className="exercise-insights"><div><span>Tekniktips</span><strong>{techniqueTip(active.id)}</strong></div><div><span>Planerad känsla</span><strong>RPE 7–8 · kontrollerat tempo</strong></div></div><div className="set-log premium-set-log"><div className="set-row head"><span>Set</span><span>Vikt</span><span>Reps</span><span>RPE</span><span>Notering</span><span>Klar</span></div>{active.sets.map((s,i)=><div className={`set-row premium ${s.done?'done':''}`} key={s.id}><b>{i+1}</b><input aria-label={`Vikt set ${i+1}`} inputMode="decimal" type="number" value={s.kg} onChange={e=>updateSet(i,{kg:Number(e.target.value)})}/><input aria-label={`Reps set ${i+1}`} inputMode="numeric" type="number" value={s.reps} onChange={e=>updateSet(i,{reps:Number(e.target.value)})}/><select aria-label={`RPE set ${i+1}`} value={s.rpe} onChange={e=>updateSet(i,{rpe:Number(e.target.value)})}>{[6,7,8,9,10].map(v=><option key={v}>{v}</option>)}</select><input aria-label={`Notering set ${i+1}`} value={s.notes||''} placeholder="Notering" onChange={e=>updateSet(i,{notes:e.target.value})}/><button className="set-done-button" onClick={()=>toggleDone(i,s)}>{s.done?<Check size={21}/>:<span/>}</button></div>)}</div></article><div className="session-nav premium-session-nav"><button className="p4-secondary" disabled={activeIndex===0} onClick={()=>setActiveIndex(i=>i-1)}>Föregående</button><button className="p4-primary" disabled={activeIndex===session.exercises.length-1} onClick={()=>setActiveIndex(i=>i+1)}>Nästa övning</button></div></section><aside className="panel session-side premium-session-side"><SectionTitle eyebrow="Live" title="Workout progress"/><MuscleVolume live={load}/><div className="recovery-live"><HeartPulse size={22}/><span><strong>Belastning sparas direkt</strong><small>Kroppskartan uppdateras utan extra steg.</small></span></div></aside><div className="floating-rest-timer" role="timer" aria-live="polite"><Clock size={18}/><strong>{Math.floor(restSeconds/60)}:{String(restSeconds%60).padStart(2,'0')}</strong><button onClick={()=>setRestPaused(v=>!v)}><Pause size={15}/>{restPaused?'Fortsätt':'Pausa'}</button><button onClick={()=>setRestSeconds(0)}><SkipForward size={15}/>Skip</button><button onClick={()=>setRestSeconds(v=>v+30)}>+30 sek</button></div></div>
 }
-
 const previousPerformance=id=>({bench:'75 × 8, 8, 7',row:'70 × 10, 9, 9',squat:'85 × 6, 6, 5'}[id]||'Stabil prestation')
 const progressionSuggestion=id=>({bench:'77,5 kg × 6–8',row:'72,5 kg × 8–10',squat:'87,5 kg × 5–7'}[id]||'Behåll vikt och lägg till 1 repetition')
+const techniqueTip=id=>({bench:'Skulderbladen bak och ned, pausa lätt mot bröstet innan press.',row:'Starta draget med skulderbladet och håll bröstet högt.',squat:'Tryck knäna i tålinjen och behåll tryck över hela foten.',pulldown:'Dra armbågarna ned mot fickorna utan att luta bak för mycket.',ohp:'Spänn sätet och låt huvudet komma igenom när vikten passerar pannan.'}[id]||'Håll kontrollerad excentrisk fas och lämna 1–2 reps i reserv.')
 
 function MuscleVolume({compact=false,live={}}){
   const defaults={Bröst:12,Rygg:16,Axlar:10,Triceps:9,Biceps:8,Ben:14,Säte:9,Bål:6,Vader:5};const data=Object.keys(live).length?live:defaults
   return <div className={`muscle-volume ${compact?'compact':''}`}>{Object.entries(data).map(([m,v])=><div key={m}><span>{m}</span><div><i style={{width:`${Math.min(100,(v/18)*100)}%`}}/></div><b>{Number(v).toFixed(Number(v)%1?1:0)} set</b></div>)}</div>
 }
 
-function WorkoutLanding({programs,startProgram}){return <div className="p4-grid"><Card className="span8 atlas-hero-mobile"><span className="pill"><Dumbbell size={15}/>Workout</span><h2>Välj nästa premium-pass</h2><p>Snabb start med tydliga kort, mjuk spacing och samma mörka designsystem som resten av ATLAS.</p><div className="atlas-card-stack">{programs.filter(p=>!p.archived).slice(0,3).map(p=><WorkoutCard key={p.id} title={p.name} tag={p.type} meta={`${p.exercises.length} övningar · ${p.days} dagar/vecka`} onStart={()=>startProgram(p)}/>)}</div></Card><StatCard icon={Flame} label="Planerad intensitet" value="Medel" note="RPE 7–8"/><StatCard icon={HeartPulse} label="Readiness" value="84%" note="Redo" tone="positive"/></div>}
+function WorkoutLanding({programs,startProgram}){const today=programs.find(p=>p.id==='upper-a')||programs[0];return <div className="p4-grid workout-overview"><Card className="span8 atlas-hero-mobile workout-overview-hero"><span className="pill"><Dumbbell size={15}/>Dagens workout</span><h2>{today.name}</h2><p>Ren, friktionsfri loggning med stora touchytor, liveprogress och flytande vilotimer.</p><div className="overview-meta"><span>52–58 min</span><span>Bröst · Rygg · Axlar</span><span>Förväntad fatigue: medel</span></div><button className="p4-primary start-workout-large" onClick={()=>startProgram(today)}><Play size={19}/>Starta workout</button></Card><StatCard icon={Clock} label="Duration estimate" value="55 min" note="inkl. vila"/><StatCard icon={Flame} label="Expected fatigue" value="Medel" note="RPE 7–8"/><section className="panel span12"><SectionTitle eyebrow="Översikt" title="Välj dagens pass"/><div className="atlas-card-stack">{programs.filter(p=>!p.archived).slice(0,3).map(p=><WorkoutCard key={p.id} title={p.name} tag={p.type} meta={`${p.exercises.length} övningar · ${p.days} dagar/vecka`} onStart={()=>startProgram(p)}/>)}</div></section></div>}
 
 function FoodView({notify}){return <div className="p4-grid"><Card className="span8 atlas-hero-mobile food-glow"><span className="pill"><Apple size={15}/>Nutrition</span><h2>1 420 / 2 050 kcal</h2><p>Premium food-vy med tydlig makrobalans och snabb loggning utan ny affärslogik.</p><ActionButton onClick={()=>notify('Måltid redo att loggas')}><Plus size={17}/>Logga måltid</ActionButton></Card><Card className="span4 center-card"><ProgressRing value={69} label="kcal"/></Card>{[['Protein','132 / 170 g',78],['Kolhydrater','146 / 210 g',70],['Fett','48 / 68 g',71]].map(m=><Card key={m[0]} className="span4 macro-premium"><span>{m[0]}</span><strong>{m[1]}</strong><div className="progress-track"><i style={{width:`${m[2]}%`}}/></div></Card>)}<Card className="span12"><AtlasSectionTitle eyebrow="Dagens logg" title="Måltider" action="Visa allt"/><div className="premium-list">{['Frukost · Yoghurt och bär · 410 kcal','Lunch · Kyckling och ris · 620 kcal','Mellanmål · Whey och banan · 390 kcal'].map(x=><div key={x}>{x}</div>)}</div></Card></div>}
 
@@ -182,7 +191,7 @@ function CalendarView({history}){
   return <div className="p4-grid"><section className="panel span8"><SectionTitle eyebrow="Juli 2026" title="Träningskalender"/><div className="calendar-grid">{['M','T','O','T','F','L','S'].map((d,i)=><b key={i}>{d}</b>)}{days.map(d=><button key={d} className={trained.has(d)?'trained':''}><span>{d}</span>{trained.has(d)&&<i/>}</button>)}</div></section><section className="panel span4"><SectionTitle eyebrow="Kontinuitet" title="Denna månad"/><div className="calendar-kpis"><KpiMini value="12" label="Pass"/><KpiMini value="82%" label="Följsamhet"/><KpiMini value="4" label="Veckor i rad"/></div></section></div>
 }
 
-function HistoryView({history}){const [q,setQ]=useState('');const filtered=history.filter(h=>(h.name+h.gym+h.date).toLowerCase().includes(q.toLowerCase()));return <section className="panel"><div className="history-toolbar"><SectionTitle eyebrow="Alla pass" title="Träningshistorik"/><div className="search-box small"><Search size={17}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Filtrera historik"/></div></div><div className="history-table"><div className="history-row head"><span>Datum</span><span>Pass</span><span>Gym</span><span>Set</span><span>Volym</span><span>Tid</span></div>{filtered.map(h=><div className="history-row" key={h.id}><span>{h.date}</span><strong>{h.name}</strong><span>{h.gym}</span><span>{h.sets}</span><span>{h.volume.toLocaleString('sv-SE')} kg</span><span>{h.duration} min</span></div>)}</div></section>}
+function HistoryView({history,completedWorkout}){const [q,setQ]=useState('');const filtered=history.filter(h=>(h.name+h.gym+h.date).toLowerCase().includes(q.toLowerCase()));return <div className="completion-layout">{completedWorkout&&<section className="panel completion-celebration"><div className="celebration-orb"><Trophy size={46}/></div><span className="pill"><Sparkles size={15}/>Workout complete</span><h2>Snyggt jobbat.</h2><p>{completedWorkout.name} är sparat med en komplett premiumsummering.</p><div className="completion-stats"><div><strong>{completedWorkout.volume.toLocaleString('sv-SE')} kg</strong><span>Volym</span></div><div><strong>{completedWorkout.prs}</strong><span>PRs</span></div><div><strong>{completedWorkout.calories}</strong><span>Kalorier</span></div><div><strong>{completedWorkout.recovery}</strong><span>Recovery estimate</span></div></div></section>}<section className="panel"><div className="history-toolbar"><SectionTitle eyebrow="Alla pass" title="Träningshistorik"/><div className="search-box small"><Search size={17}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Filtrera historik"/></div></div><div className="history-table"><div className="history-row head"><span>Datum</span><span>Pass</span><span>Gym</span><span>Set</span><span>Volym</span><span>Tid</span></div>{filtered.map(h=><div className="history-row" key={h.id}><span>{h.date}</span><strong>{h.name}</strong><span>{h.gym}</span><span>{h.sets}</span><span>{h.volume.toLocaleString('sv-SE')} kg</span><span>{h.duration} min</span></div>)}</div></section></div>}
 
 function StatsView({history}){const volume=history.reduce((s,h)=>s+h.volume,0);return <div className="p4-grid"><Kpi icon={Dumbbell} label="Totalt antal pass" value={history.length}/><Kpi icon={Flame} label="Total volym" value={`${Math.round(volume/1000)} ton`}/><Kpi icon={Trophy} label="Personbästa" value="11"/><Kpi icon={Activity} label="Träningsdagar" value="18"/><section className="panel span7"><SectionTitle eyebrow="8 veckor" title="Volymutveckling"/><div className="bar-chart">{[42,48,55,51,63,68,74,82].map((h,i)=><div key={i}><span style={{height:`${h}%`}}/><small>V{i+1}</small></div>)}</div></section><section className="panel span5"><SectionTitle eyebrow="Balans" title="Muskelgrupper"/><MuscleVolume compact/></section><section className="panel span12"><SectionTitle eyebrow="Smart progression" title="Nästa rekommenderade höjningar"/><div className="recommendations">{[['Bänkpress','75 → 77,5 kg','Två pass inom målreps'],['Sittande rodd','70 → 72,5 kg','RPE under 8,5'],['Benpress','150 → 155 kg','Alla set genomförda']].map(r=><div key={r[0]}><Sparkles size={20}/><span><strong>{r[0]}</strong><small>{r[2]}</small></span><b>{r[1]}</b><button>Acceptera</button></div>)}</div></section></div>}
 
