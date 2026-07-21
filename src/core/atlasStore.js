@@ -27,7 +27,7 @@ const defaultState = {
     painNotes: [],
     memories: []
   },
-  coach: { memories: [], insights: [] },
+  coach: { recommendation: null, recommendationHistory: [], messages: [], memories: [], insights: [] },
   decisions: { current: null, history: [], logs: [] },
   events: []
 }
@@ -60,7 +60,7 @@ function loadState() {
           ...(saved.memory?.trainingPattern || {})
         }
       },
-      coach: { ...defaultState.coach, ...(saved.coach || {}) },
+      coach: { ...defaultState.coach, ...(saved.coach || {}), messages: saved.coach?.messages || saved.coach?.chat || defaultState.coach.messages, insights: saved.coach?.insights || [], memories: saved.coach?.memories || [] },
       decisions: { ...defaultState.decisions, ...(saved.decisions || {}) },
       goalPlans: { ...defaultState.goalPlans, ...(saved.goalPlans || {}) }
     }
