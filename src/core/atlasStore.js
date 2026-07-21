@@ -1,24 +1,39 @@
 const STORAGE_KEY = 'atlas-core-v1'
 
 const defaultState = {
-  version: 1,
+  version: 2,
   profile: {},
   goals: [],
   workouts: [],
-  recovery: { muscles: {}, updatedAt: null },
+  recovery: { muscles: {}, score: 100, updatedAt: null },
   coach: { memories: [], insights: [] },
+  decisions: { current: null, history: [], logs: [] },
   events: []
 }
 
 let state = loadState()
 const listeners = new Set()
 
+function cloneDefaultState() {
+  return typeof structuredClone === 'function'
+    ? structuredClone(defaultState)
+    : JSON.parse(JSON.stringify(defaultState))
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? { ...defaultState, ...JSON.parse(raw) } : structuredClone(defaultState)
+    if (!raw) return cloneDefaultState()
+    const saved = JSON.parse(raw)
+    return {
+      ...cloneDefaultState(),
+      ...saved,
+      recovery: { ...defaultState.recovery, ...(saved.recovery || {}) },
+      coach: { ...defaultState.coach, ...(saved.coach || {}) },
+      decisions: { ...defaultState.decisions, ...(saved.decisions || {}) }
+    }
   } catch {
-    return structuredClone(defaultState)
+    return cloneDefaultState()
   }
 }
 
@@ -51,7 +66,7 @@ export function subscribeAtlas(listener) {
 }
 
 export function resetAtlasState() {
-  state = structuredClone(defaultState)
+  state = cloneDefaultState()
   persist()
   notify()
 }
