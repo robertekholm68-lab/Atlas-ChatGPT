@@ -13,6 +13,7 @@ import { getAtlasState, subscribeAtlas } from './core/atlasStore'
 import { AtlasBottomNavigation, AtlasHomeScreen } from './atlasHome'
 import { recoverMuscles, recoveryScore } from './core/recoveryEngine'
 import { buildCoachRecommendation } from './core/coachIntelligenceEngine'
+import { buildRecoveryViewModel } from './recoveryViewModel.js'
 import './intelligence.css'
 
 const STORAGE_KEY = 'atlas-intelligence-v1'
@@ -134,7 +135,7 @@ export default function AppIntelligence() {
       {page === 'today' && <AtlasHomeScreen profile={profile} core={core} recommendation={coachRecommendation} readiness={readiness} setPage={setPage}/>} 
       {page === 'coach' && <CoachPage profile={profile} recommendation={coachRecommendation} messages={messages} setMessages={setMessages} setPage={setPage}/>} 
       {page === 'goal' && <GoalPage profile={profile} updateGoal={updateGoal} notify={notify}/>} 
-      {page === 'recovery' && <RecoveryPage profile={profile} updateCheckIn={updateCheckIn} readiness={readiness}/>} 
+      {page === 'recovery' && <RecoveryPage profile={profile} core={core} updateCheckIn={updateCheckIn} readiness={readiness}/>} 
       {page === 'decisions' && <DecisionPage decisions={decisions} current={decision} acceptDecision={acceptDecision}/>} 
       {page === 'settings' && <SettingsPage profile={profile} setProfile={setLocalProfile} notify={notify}/>} 
     </main>
@@ -247,9 +248,17 @@ function GoalPage({ profile, updateGoal, notify }) {
   </div>
 }
 
-function RecoveryPage({ profile, updateCheckIn, readiness }) {
-  return <div className="i-grid">
-    <section className="i-panel span-5"><SectionTitle icon={Gauge} eyebrow="Daglig check-in" title="Hur känns kroppen?"/>
+function RecoveryPage({ profile, core, updateCheckIn, readiness }) {
+  const recovery = buildRecoveryViewModel({ profile, core, readiness })
+  const painLabel = { none: 'Ingen smärta', mild: 'Lätt smärta', moderate: 'Tydlig smärta' }[recovery.pain] || 'Ej loggat'
+
+  return <div className="i-grid recovery-dashboard">
+    <section className={`i-hero span-12 recovery-hero ${recovery.tone}`}>
+      <div><span className="i-pill"><HeartPulse size={15}/> Recovery Engine</span><h2>{recovery.headline}</h2><p>{recovery.advice}</p><div className="recovery-hero-meta"><span>{recovery.sleep.label}</span><span>{recovery.stress.label}</span><span>{painLabel}</span></div></div>
+      <div className="readiness-orb recovery-score-orb" style={{'--recovery-score': `${recovery.score}%`}}><strong>{recovery.score}</strong><span>Readiness</span></div>
+    </section>
+
+    <section className="i-panel span-5 recovery-checkin-panel"><SectionTitle icon={Gauge} eyebrow="Daglig check-in" title="Hur känns kroppen?"/>
       <Slider label="Energi" value={profile.checkIn.energy} onChange={v=>updateCheckIn('energy',v)}/>
       <Slider label="Stress" value={profile.checkIn.stress} onChange={v=>updateCheckIn('stress',v)}/>
       <Slider label="Muskelömhet" value={profile.checkIn.soreness} onChange={v=>updateCheckIn('soreness',v)}/>
@@ -257,12 +266,33 @@ function RecoveryPage({ profile, updateCheckIn, readiness }) {
       <label className="sleep-field">Sömn<input type="number" step="0.1" value={profile.checkIn.sleep} onChange={e=>updateCheckIn('sleep',Number(e.target.value))}/><span>timmar</span></label>
       <label className="pain-field">Smärta<select value={profile.checkIn.pain} onChange={e=>updateCheckIn('pain',e.target.value)}><option value="none">Ingen</option><option value="mild">Lätt</option><option value="moderate">Tydlig</option></select></label>
     </section>
-    <section className="i-panel span-7"><SectionTitle icon={HeartPulse} eyebrow="Recovery Engine · live från ATLAS Core" title={`Total readiness ${readiness}`}/>
-      <div className="recovery-list">{Object.entries(profile.recovery).filter(([k])=>k!=='total').map(([key,value])=><div key={key}><span>{muscleLabel(key)}</span><div><i style={{width:`${value}%`}}/></div><b>{value}%</b></div>)}</div>
-      <div className={`recovery-advice ${readiness<45?'warning':''}`}><ShieldCheck size={24}/><div><strong>{readiness>=70?'Klar för kvalitetsträning':readiness>=45?'Träna med reducerad volym':'Prioritera återhämtning'}</strong><p>{readiness>=70?KNOWLEDGE_BASE.readiness.high:readiness>=45?KNOWLEDGE_BASE.readiness.medium:KNOWLEDGE_BASE.readiness.low}</p></div></div>
+
+    <section className="i-panel span-7 recovery-summary-panel"><SectionTitle icon={ShieldCheck} eyebrow="Beslutsstöd" title="Dagens återhämtningsplan"/>
+      <div className="recovery-plan-grid">
+        <RecoverySignal label="Sömn" value={recovery.sleep.value ? `${recovery.sleep.value} h` : '—'} note={recovery.sleep.label}/>
+        <RecoverySignal label="Energi" value={`${recovery.energy.value}/10`} note={recovery.energy.label}/>
+        <RecoverySignal label="Stress" value={`${recovery.stress.value}/10`} note={recovery.stress.label}/>
+        <RecoverySignal label="Ömhet" value={`${recovery.soreness.value}/10`} note={recovery.soreness.label}/>
+      </div>
+      <div className={`recovery-advice ${recovery.score<50?'warning':''}`}><ShieldCheck size={24}/><div><strong>{recovery.score>=75?'Klar för kvalitetsträning':recovery.score>=50?'Träna med reducerad volym':'Prioritera återhämtning'}</strong><p>{recovery.score>=75?KNOWLEDGE_BASE.readiness.high:recovery.score>=50?KNOWLEDGE_BASE.readiness.medium:KNOWLEDGE_BASE.readiness.low}</p></div></div>
+    </section>
+
+    <section className="i-panel span-7"><SectionTitle icon={HeartPulse} eyebrow="Muskelåterhämtning" title="Live från ATLAS Core"/>
+      {recovery.hasCoreRecovery ? <div className="recovery-muscle-grid">{recovery.muscles.map(muscle=><article key={muscle.name} className={muscle.readiness<50?'loaded':''}><div><strong>{muscle.name}</strong><small>{muscle.fatigue}% belastning</small></div><b>{muscle.readiness}%</b><div><i style={{width:`${muscle.readiness}%`}}/></div></article>)}</div> : <p className="atlas-empty">Ingen lokal muskelåterhämtning loggad ännu. Avsluta ett pass för att fylla kroppskartan.</p>}
+    </section>
+
+    <section className="i-panel span-5"><SectionTitle icon={Activity} eyebrow="Belastningsfokus" title="Vad ska skyddas?"/>
+      <div className="recovery-focus-list">
+        <RecoveryFocus label="Mest belastad" value={recovery.mostLoaded?.name || 'Saknas'} note={recovery.mostLoaded ? `${recovery.mostLoaded.readiness}% redo` : 'Ingen muskeldata ännu'}/>
+        <RecoveryFocus label="Mest redo" value={recovery.freshest?.name || 'Saknas'} note={recovery.freshest ? `${recovery.freshest.readiness}% redo` : 'Logga pass för bättre förslag'}/>
+        <RecoveryFocus label="Senaste pass" value={recovery.recentWorkouts[0]?.name || 'Inget ännu'} note={recovery.recentWorkouts[0] ? `${recovery.recentWorkouts[0].sets} set sparade` : 'Starta i Träning'} />
+      </div>
     </section>
   </div>
 }
+
+function RecoverySignal({ label, value, note }) { return <article><span>{label}</span><strong>{value}</strong><small>{note}</small></article> }
+function RecoveryFocus({ label, value, note }) { return <div><span>{label}</span><strong>{value}</strong><small>{note}</small></div> }
 
 function DecisionPage({ decisions, current, acceptDecision }) {
   const all = decisions.length ? decisions : [{...current, accepted:false}]
