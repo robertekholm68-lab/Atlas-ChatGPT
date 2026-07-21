@@ -180,3 +180,29 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   .hero-card { display:grid; }.readiness-ring,.macro-donut { margin-top:8px; }.hero-actions { align-items:stretch; flex-direction:column; gap:5px; }.text-button { justify-content:center; }
   .muscle-grid { grid-template-columns:1fr; }.meal-list > div { align-items:flex-start; }.topbar-actions { display:none; }
 }
+
+/* ATLAS UI 2.0 centralized theme tokens */
+:root {
+  --primary-lime: #d9ff4f;
+  --secondary-lime: #8dff72;
+  --dark-background: #020403;
+  --dark-card: #0d1512;
+  --divider: rgba(223, 255, 225, 0.08);
+  --disabled: #46534c;
+  --success: #8dff72;
+  --error: #ff6b6b;
+  --accent-cyan: #6df7e7;
+  --accent-orange: #ff9f4a;
+  --glow-lime: rgba(217, 255, 79, 0.28);
+  --glow-cyan: rgba(109, 247, 231, 0.18);
+  --font-display: clamp(42px, 7vw, 78px);
+  --font-h1: clamp(34px, 5vw, 56px);
+  --font-h2: clamp(28px, 4vw, 44px);
+  --font-h3: 24px;
+  --font-section: 13px;
+  --font-body: 16px;
+  --font-small: 13px;
+  --font-caption: 11px;
+  --font-metric: clamp(32px, 4vw, 52px);
+  --font-button: 14px;
+}

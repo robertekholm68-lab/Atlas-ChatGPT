@@ -79,3 +79,66 @@
     display: none;
   }
 }
+
+/* ATLAS UI 2.0 shell chrome */
+.atlas-product-shell {
+  color: var(--text);
+  background:
+    radial-gradient(circle at 50% -8%, rgba(216, 255, 62, 0.12), transparent 26%),
+    radial-gradient(circle at 88% 18%, rgba(109, 247, 231, 0.08), transparent 24%),
+    #020403;
+}
+
+.atlas-module-switch {
+  top: 18px;
+  gap: 6px;
+  padding: 6px;
+  border-color: rgba(216, 255, 62, 0.14);
+  background: rgba(3, 8, 6, 0.78);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.44), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.atlas-module-switch button {
+  min-height: 42px;
+  border: 1px solid transparent;
+  transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.atlas-module-switch button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.055);
+  color: #f5fff8;
+}
+
+.atlas-module-switch button.active {
+  background: linear-gradient(135deg, #d9ff4f, #8dff72);
+  color: #071007;
+  box-shadow: 0 12px 28px rgba(216, 255, 79, 0.18);
+}
+
+.atlas-dev-toggle.active {
+  border-color: rgba(109, 247, 231, 0.26) !important;
+  background: rgba(109, 247, 231, 0.11) !important;
+  color: #6df7e7 !important;
+}
+
+@media (min-width: 761px) {
+  .atlas-product-shell .p4-main {
+    padding-top: 84px;
+  }
+}
+
+@media (max-width: 760px) {
+  .atlas-module-switch {
+    left: 10px;
+    right: 10px;
+    transform: none;
+    justify-content: center;
+    border-radius: 22px;
+  }
+
+  .atlas-module-switch button span,
+  .atlas-dev-toggle span {
+    display: none;
+  }
+}
