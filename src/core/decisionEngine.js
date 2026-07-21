@@ -33,11 +33,11 @@ function findPersonalRecords(workout, previousWorkouts = []) {
         .flatMap(item => (item.sets || []).map(set => Number(set.kg || 0)))
     ))
 
-    if (currentBest > previousBest) {
+    if (previousBest > 0 && currentBest > previousBest) {
       records.push({
         type: 'personal-record',
         title: `Nytt vikt-PB i ${exercise.name}`,
-        message: `${currentBest} kg är högre än ditt tidigare registrerade bästa på ${previousBest || 0} kg.`,
+        message: `${currentBest} kg är högre än ditt tidigare registrerade bästa på ${previousBest} kg.`,
         exerciseId: exercise.id,
         value: currentBest,
         previousValue: previousBest
@@ -107,7 +107,7 @@ export function evaluateAtlasDecisions(state, context = {}) {
     title: record.title,
     action: 'celebrate',
     message: record.message,
-    evidence: [`Nytt värde: ${record.value} kg`, `Tidigare bästa: ${record.previousValue || 0} kg`],
+    evidence: [`Nytt värde: ${record.value} kg`, `Tidigare bästa: ${record.previousValue} kg`],
     createdAt: new Date().toISOString()
   }))
 
@@ -126,7 +126,7 @@ export function evaluateAtlasDecisions(state, context = {}) {
 
   steps.push({ label: `${decisions.length} beslut skapade`, status: 'done' })
   if (records.length) steps.push({ label: `${records.length} personbästa upptäckta`, status: 'done' })
-  steps.push({ label: 'Dashboard och coach uppdaterade', status: 'done' })
+  steps.push({ label: 'ATLAS Store och anslutna vyer uppdaterade', status: 'done' })
 
   return {
     current: decisions[0],
