@@ -27,7 +27,7 @@ export function buildCoachRecommendation(inputState = {}, now = Date.now()) {
   const muscles = readinessEntries(state.recovery)
   const best = muscles[0]
   const worst = [...muscles].sort((a,b) => a.readiness - b.readiness)[0]
-  const decisionOutput = state.decisions?.current ? { current: state.decisions.current } : evaluateAtlasDecisions(state, { trigger: 'coach.recommendation' })
+  const decisionOutput = state.decisions?.current ? { current: state.decisions.current } : evaluateAtlasDecisions(state, { trigger: 'coach.recommendation', now })
   const decision = decisionOutput.current
   const workouts = state.workouts || []
   const latest = latestWorkout(workouts)

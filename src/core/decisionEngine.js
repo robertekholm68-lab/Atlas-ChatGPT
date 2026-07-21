@@ -49,6 +49,8 @@ function findPersonalRecords(workout, previousWorkouts = []) {
 }
 
 export function evaluateAtlasDecisions(state, context = {}) {
+  const generatedAt = context.now || Date.now()
+  const generatedIso = new Date(generatedAt).toISOString()
   const workout = context.workout || newestWorkout(state.workouts)
   const readiness = Number(state.recovery?.score ?? 100)
   const muscles = muscleReadiness(state.recovery)
@@ -63,64 +65,64 @@ export function evaluateAtlasDecisions(state, context = {}) {
 
   if (leastReady?.fatigue >= HIGH_FATIGUE) {
     decisions.push({
-      id: `avoid-${leastReady.name}-${Date.now()}`,
+      id: `avoid-${leastReady.name}-${generatedAt}`,
       category: 'recovery',
       priority: 'high',
       title: `Undvik tung belastning för ${leastReady.name}`,
       action: 'reduce-load',
       message: `${leastReady.name} är endast ${leastReady.readiness}% återhämtad. Välj annan muskelgrupp eller minska volymen tydligt.`,
       evidence: [`${leastReady.name}: ${leastReady.readiness}% återhämtad`, `Total återhämtning: ${readiness}%`],
-      createdAt: new Date().toISOString()
+      createdAt: generatedIso
     })
   } else if (leastReady?.fatigue >= MODERATE_FATIGUE) {
     decisions.push({
-      id: `modify-${leastReady.name}-${Date.now()}`,
+      id: `modify-${leastReady.name}-${generatedAt}`,
       category: 'recovery',
       priority: 'medium',
       title: `Modifiera belastningen för ${leastReady.name}`,
       action: 'modify-volume',
       message: `${leastReady.name} är delvis återhämtad. Behåll teknikfokus och minska arbetsseten med ungefär 20%.`,
       evidence: [`${leastReady.name}: ${leastReady.readiness}% återhämtad`, 'Regel: reducerad volym vid 50–74% trötthet'],
-      createdAt: new Date().toISOString()
+      createdAt: generatedIso
     })
   }
 
   if (mostReady && mostReady.readiness >= 85) {
     decisions.push({
-      id: `ready-${mostReady.name}-${Date.now()}`,
+      id: `ready-${mostReady.name}-${generatedAt}`,
       category: 'training',
       priority: 'normal',
       title: `${mostReady.name} är redo för kvalitetsträning`,
       action: 'train',
       message: `${mostReady.name} har högst beräknad återhämtning och är ett bra val för nästa pass.`,
       evidence: [`${mostReady.name}: ${mostReady.readiness}% återhämtad`, `Total återhämtning: ${readiness}%`],
-      createdAt: new Date().toISOString()
+      createdAt: generatedIso
     })
   }
 
   const previousWorkouts = (state.workouts || []).filter(item => String(item.id) !== String(workout?.id))
   const records = findPersonalRecords(workout, previousWorkouts)
   records.forEach(record => decisions.push({
-    id: `pb-${record.exerciseId}-${Date.now()}`,
+    id: `pb-${record.exerciseId}-${generatedAt}`,
     category: 'progress',
     priority: 'positive',
     title: record.title,
     action: 'celebrate',
     message: record.message,
     evidence: [`Nytt värde: ${record.value} kg`, `Tidigare bästa: ${record.previousValue} kg`],
-    createdAt: new Date().toISOString()
+    createdAt: generatedIso
   }))
 
   if (!decisions.length) {
     decisions.push({
-      id: `stable-${Date.now()}`,
+      id: `stable-${generatedAt}`,
       category: 'training',
       priority: 'normal',
       title: 'Fortsätt enligt planen',
       action: 'continue',
       message: 'Ingen tydlig risk eller avvikelse hittades. Behåll planerad belastning och följ upp RPE efter passet.',
       evidence: [`Total återhämtning: ${readiness}%`, `${state.workouts?.length || 0} pass i träningshistoriken`],
-      createdAt: new Date().toISOString()
+      createdAt: generatedIso
     })
   }
 
@@ -132,11 +134,11 @@ export function evaluateAtlasDecisions(state, context = {}) {
     current: decisions[0],
     generated: decisions,
     log: {
-      id: `decision-run-${Date.now()}`,
+      id: `decision-run-${generatedAt}`,
       trigger: context.trigger || 'state.updated',
       workoutId: workout?.id || null,
       steps,
-      createdAt: new Date().toISOString()
+      createdAt: generatedIso
     }
   }
 }

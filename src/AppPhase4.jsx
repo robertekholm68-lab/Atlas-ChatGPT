@@ -1,10 +1,13 @@
 import './phase4.css'
 import { ActionButton, BottomNavigation, Card, ExerciseRow, ProgressRing, SectionTitle as AtlasSectionTitle, StatCard, WorkoutCard } from './atlasDesignSystem'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { getAtlasState, subscribeAtlas } from './core/atlasStore'
+import { buildRecoveryViewModel } from './core/recoveryEngine'
+import { recordCompletedWorkout } from './core/eventEngine'
 import {
   Activity, Apple, Archive, ArrowDown, ArrowUp, BarChart3, Bot, CalendarDays, Check,
   ChevronRight, Clipboard, Copy, Download, Dumbbell, FileUp, Flame, GripVertical,
-  HeartPulse, History, Library, Moon, ListFilter, MoreHorizontal, Pencil, Play, Plus,
+  HeartPulse, History, Library, ListFilter, MoreHorizontal, Pencil, Play, Plus,
   QrCode, Search, Share2, Sparkles, Star, Target, Trash2, Utensils, Trophy, Upload, X, Clock, Pause, SkipForward
 } from 'lucide-react'
 
@@ -89,6 +92,7 @@ export default function AppPhase4(){
     const volume=sets.reduce((sum,s)=>sum+s.kg*s.reps,0)
     const completed={id:Date.now(),date:new Date().toISOString().slice(0,10),name:session.name,sets:sets.length,volume:Math.round(volume),duration:Math.max(1,Math.round((Date.now()-session.startedAt)/60000)),gym:'Nordic Wellness',prs:Math.min(3,Math.max(1,sets.filter(s=>s.rpe>=9).length)),calories:Math.round(sets.length*18+volume/95),recovery:sets.length>14?'36–42 timmar':'24–30 timmar'}
     setHistory(h=>[completed,...h])
+    recordCompletedWorkout(completed)
     setCompletedWorkout(completed)
     setSession(null);setPage('history');notify('Pass sparat')
   }
@@ -114,7 +118,7 @@ export default function AppPhase4(){
       {page==='stats'&&<StatsView history={history}/>}
       {page==='food'&&<FoodView notify={notify}/>}
       {page==='progress'&&<StatsView history={history}/>}
-      {page==='recovery'&&<RecoveryView/>}
+      {page==='recovery'&&<RecoveryView setPage={setPage}/>}
       {page==='coach'&&<CoachView notify={notify}/>}
       {page==='session'&&session&&<LiveSession session={session} setSession={setSession} finishSession={finishSession}/>}
       {page==='session'&&!session&&<WorkoutLanding programs={programs} startProgram={startProgram}/>}
@@ -192,7 +196,20 @@ function WorkoutLanding({programs,startProgram}){const today=programs.find(p=>p.
 
 function FoodView({notify}){return <div className="p4-grid"><Card className="span8 atlas-hero-mobile food-glow"><span className="pill"><Apple size={15}/>Nutrition</span><h2>1 420 / 2 050 kcal</h2><p>Premium food-vy med tydlig makrobalans och snabb loggning utan ny affärslogik.</p><ActionButton onClick={()=>notify('Måltid redo att loggas')}><Plus size={17}/>Logga måltid</ActionButton></Card><Card className="span4 center-card"><ProgressRing value={69} label="kcal"/></Card>{[['Protein','132 / 170 g',78],['Kolhydrater','146 / 210 g',70],['Fett','48 / 68 g',71]].map(m=><Card key={m[0]} className="span4 macro-premium"><span>{m[0]}</span><strong>{m[1]}</strong><div className="progress-track"><i style={{width:`${m[2]}%`}}/></div></Card>)}<Card className="span12"><AtlasSectionTitle eyebrow="Dagens logg" title="Måltider" action="Visa allt"/><div className="premium-list">{['Frukost · Yoghurt och bär · 410 kcal','Lunch · Kyckling och ris · 620 kcal','Mellanmål · Whey och banan · 390 kcal'].map(x=><div key={x}>{x}</div>)}</div></Card></div>}
 
-function RecoveryView(){return <div className="p4-grid"><Card className="span8 atlas-hero-mobile recovery-glow"><span className="pill"><Moon size={15}/>Recovery</span><h2>Återhämtning 82%</h2><p>Sömn, puls och lokal belastning sammanfattas i en lugn mobile-first vy.</p><div className="recovery-pills"><span>7 h 24 m sömn</span><span>52 bpm</span><span>Låg stress</span></div></Card><Card className="span4 center-card"><ProgressRing value={82} label="redo"/></Card><StatCard icon={Moon} label="Sömnkvalitet" value="88%" note="Stabil rytm"/><StatCard icon={HeartPulse} label="Vilopuls" value="52" note="Under baslinje" tone="positive"/><StatCard icon={Activity} label="Belastning" value="68%" note="Optimal zon"/></div>}
+function RecoveryView({ setPage }){
+  const [core,setCore]=useState(getAtlasState)
+  useEffect(()=>subscribeAtlas(setCore),[])
+  const vm=useMemo(()=>buildRecoveryViewModel(core),[core])
+  return <div className={`p4-grid recovery-command-center recovery-${vm.color}`}>
+    <Card className="span8 atlas-hero-mobile recovery-main-card"><span className="pill"><HeartPulse size={15}/>What should I do today?</span><h2>{vm.score}<small>/100</small></h2><strong>{vm.recommendation}</strong><p>{vm.decision}</p><div className="recovery-pills"><span>{vm.nextWorkoutPrediction}</span><span>{core.workouts?.length || 0} completed sessions</span><span>Local ATLAS data only</span></div></Card>
+    <Card className="span4 center-card recovery-ring-card"><ProgressRing value={vm.score} label={vm.recommendation}/><button type="button" className="p4-primary recovery-action" onClick={()=>setPage(vm.nextAction.includes('Start')?'programs':'session')}>{vm.nextAction}</button></Card>
+    <section className="panel span12 recovery-decision"><SectionTitle eyebrow="Today's decision" title="Clear training instruction"/><p>{vm.decision}</p></section>
+    <section className="panel span12"><SectionTitle eyebrow="Recovery breakdown" title="Body readiness"/><div className="recovery-breakdown-grid">{vm.breakdown.map(item=><RecoveryBreakdownCard key={item.label} item={item}/>)}</div></section>
+    <section className="panel span7"><SectionTitle eyebrow="Recovery timeline" title="Next 24 hours"/><div className="recovery-horizontal-timeline">{vm.timeline.map(item=><div key={item.label}><span>{item.label}</span><strong>{item.value}%</strong><small>{item.note}</small></div>)}<div><span>Next workout</span><strong>{vm.nextWorkoutPrediction}</strong><small>Predicted from current fatigue</small></div></div></section>
+    <section className="panel span5"><SectionTitle eyebrow="Readiness factors" title="Why this answer"/><div className="readiness-factor-list">{vm.factors.map(factor=><div key={factor.label}><div><span>{factor.label}</span><strong>{factor.value}%</strong></div><div className="progress-track"><i style={{width:`${factor.value}%`}}/></div><small>{factor.detail}</small></div>)}</div></section>
+  </div>
+}
+function RecoveryBreakdownCard({ item }){return <article className="recovery-breakdown-card"><div><strong>{item.label}</strong><b>{item.recovery}%</b></div><div className="progress-track"><i style={{width:`${item.recovery}%`}}/></div><footer><span>{item.trend}</span><small>Last trained: {item.lastTrained}</small></footer></article>}
 
 function CoachView({notify}){return <div className="coach-premium"><div className="coach-orb"><Bot size={42}/></div><span className="pill"><Sparkles size={15}/>Coach</span><h2>Vad vill du optimera idag?</h2><p>UI-only coachpanel som återanvänder befintliga notifieringar och inte introducerar en ny AI-motor.</p><div className="prompt-grid">{['Hur bör jag träna idag?','Vad säger min återhämtning?','Justera veckans plan'].map(q=><button key={q} onClick={()=>notify('Coach-fråga vald')}><Sparkles size={18}/><span>{q}</span><ChevronRight size={18}/></button>)}</div></div>}
 
