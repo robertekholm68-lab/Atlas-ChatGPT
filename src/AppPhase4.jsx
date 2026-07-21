@@ -2,7 +2,7 @@ import './phase4.css'
 import { ActionButton, BottomNavigation, Card, ExerciseRow, ProgressRing, SectionTitle as AtlasSectionTitle, StatCard, WorkoutCard } from './atlasDesignSystem'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Activity, Apple, Archive, ArrowDown, ArrowUp, BarChart3, CalendarDays, Check,
+  Activity, Apple, Archive, ArrowDown, ArrowUp, BarChart3, Bot, CalendarDays, Check,
   ChevronRight, Clipboard, Copy, Download, Dumbbell, FileUp, Flame, GripVertical,
   HeartPulse, History, Library, Moon, ListFilter, MoreHorizontal, Pencil, Play, Plus,
   QrCode, Search, Share2, Sparkles, Star, Target, Trash2, Utensils, Trophy, Upload, X
@@ -90,6 +90,7 @@ export default function AppPhase4(){
   }
 
   const nav=[['dashboard','Home',Activity],['programs','Program',Library],['session','Workout',Dumbbell],['food','Food',Utensils],['progress','Progress',BarChart3],['recovery','Recovery',HeartPulse],['coach','Coach',Bot]]
+  const bottomNavItems = nav.map(([id, label, icon]) => ({ id, label, icon }))
   return <div className="p4-shell">
     <aside className="p4-sidebar"><div className="p4-brand"><span>A</span><div><strong>ATLAS</strong><small>INTELLIGENT TRAINING</small></div></div><nav>{nav.map(([id,label,Icon])=><button key={id} className={page===id?'active':''} onClick={()=> id==='session' && !session ? setPage('programs') : setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav><div className="p4-side-tools"><button onClick={exportData}><Download size={17}/>Exportera</button><button onClick={()=>fileInput.current?.click()}><Upload size={17}/>Importera</button><input ref={fileInput} type="file" accept="application/json" hidden onChange={importData}/></div></aside>
     <main className="p4-main"><header className="p4-top"><div><span className="eyebrow">Fas 4</span><h1>{titleFor(page)}</h1><p>{subtitleFor(page)}</p></div><div><button className="p4-icon" onClick={()=>setModal('share')}><Share2 size={19}/></button><button className="p4-primary" onClick={()=>setModal('new-program')}><Plus size={18}/>Nytt program</button></div></header>
@@ -105,7 +106,7 @@ export default function AppPhase4(){
       {page==='coach'&&<CoachView notify={notify}/>}
       {page==='session'&&session&&<LiveSession session={session} setSession={setSession} finishSession={finishSession}/>}
       {page==='session'&&!session&&<WorkoutLanding programs={programs} startProgram={startProgram}/>}
-      <BottomNavigation items={nav} active={page} onChange={id=> id==='session' && !session ? setPage('programs') : setPage(id)} />
+      <BottomNavigation items={bottomNavItems} active={page} onChange={id=> id==='session' && !session ? setPage('programs') : setPage(id)} />
     </main>
     {modal==='new-program'&&<NewProgramModal onClose={()=>setModal(null)} onCreate={p=>{setPrograms(x=>[...x,p]);setModal(null);setActiveProgramId(p.id);setPage('programs');notify('Program skapat')}}/>}
     {modal==='share'&&<ShareModal programs={programs} onClose={()=>setModal(null)} notify={notify}/>} 
