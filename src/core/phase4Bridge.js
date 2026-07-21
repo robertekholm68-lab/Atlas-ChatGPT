@@ -2,6 +2,21 @@ import { recordCompletedWorkout } from './eventEngine'
 
 const PHASE4_KEY = 'atlas-phase4'
 
+const MUSCLE_CONTRIBUTION = {
+  bench: { Bröst: 1, Triceps: 0.55, Axlar: 0.35 },
+  row: { Rygg: 1, Biceps: 0.5, Axlar: 0.25 },
+  squat: { Ben: 1, Säte: 0.6, Bål: 0.35 },
+  pulldown: { Rygg: 1, Biceps: 0.55 },
+  ohp: { Axlar: 1, Triceps: 0.5 },
+  legpress: { Ben: 1, Säte: 0.45 },
+  rdl: { 'Baksida lår': 1, Säte: 0.65, Rygg: 0.25 },
+  curl: { Biceps: 1, Underarmar: 0.35 },
+  pushdown: { Triceps: 1 },
+  hipthrust: { Säte: 1, 'Baksida lår': 0.45 },
+  calf: { Vader: 1 },
+  plank: { Bål: 1, Axlar: 0.2 }
+}
+
 function parseState(value) {
   try {
     return JSON.parse(value || '{}')
@@ -18,7 +33,7 @@ function normalizeCompletedSession(session, historyEntry) {
       name: exercise.name,
       equipment: exercise.equipment,
       muscle: exercise.muscle,
-      muscleContribution: exercise.muscleContribution || {},
+      muscleContribution: MUSCLE_CONTRIBUTION[exercise.id] || {},
       sets: (exercise.sets || [])
         .filter(set => set.done)
         .map(set => ({
@@ -63,11 +78,10 @@ export function installPhase4Bridge() {
 
       if (completedSession) {
         const newestHistory = next.history?.[0]
-        const workout = normalizeCompletedSession(completedSession, {
+        recordCompletedWorkout(normalizeCompletedSession(completedSession, {
           ...newestHistory,
           completedAt: new Date().toISOString()
-        })
-        recordCompletedWorkout(workout)
+        }))
       }
 
       previous = next
