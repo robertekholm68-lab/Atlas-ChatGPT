@@ -31,6 +31,12 @@ function normalizeWorkout(payload) {
   }
 }
 
+function workoutTimestamp(workout) {
+  if (workout.completedAt) return new Date(workout.completedAt).getTime()
+  if (workout.date) return new Date(`${workout.date}T18:00:00`).getTime()
+  return Date.now()
+}
+
 export function dispatchAtlasEvent(type, payload = {}) {
   const event = {
     id: `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -45,13 +51,13 @@ export function dispatchAtlasEvent(type, payload = {}) {
   if (type === ATLAS_EVENTS.WORKOUT_FINISHED) {
     if ((current.workouts || []).some(workout => String(workout.id) === String(payload.id))) return null
     const workout = normalizeWorkout(payload)
-    const muscles = applyWorkoutToRecovery(current.recovery?.muscles, workout)
+    const muscles = applyWorkoutToRecovery(current.recovery?.muscles, workout, workoutTimestamp(workout))
     next = {
       ...next,
       workouts: [payload, ...(current.workouts || [])].slice(0, 500),
       recovery: {
         muscles,
-        score: recoveryScore(muscles),
+        score: recoveryScore(muscles, Date.now()),
         updatedAt: event.createdAt
       }
     }
