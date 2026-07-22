@@ -58,6 +58,38 @@ const atlasAssets = {
   progress: {}
 }
 
+
+const nutritionTargets = { calories: 2050, protein: 170, carbs: 210, fat: 68, water: 2.8 }
+
+const nutritionMeals = [
+  { id: 'breakfast', label: 'Frukost', title: 'Yoghurt, bär och granola', time: '07:20', calories: 410, protein: 31, carbs: 47, fat: 12, status: 'Loggad' },
+  { id: 'lunch', label: 'Lunch', title: 'Kyckling, ris och avokado', time: '12:15', calories: 620, protein: 54, carbs: 68, fat: 18, status: 'Loggad' },
+  { id: 'snack', label: 'Mellanmål', title: 'Whey, banan och kaffe', time: '15:40', calories: 390, protein: 47, carbs: 31, fat: 8, status: 'Loggad' },
+  { id: 'dinner', label: 'Planerad middag', title: 'Lax, potatis och sallad', time: '19:00', calories: 520, protein: 42, carbs: 44, fat: 22, status: 'Planerad' }
+]
+
+function buildNutritionSummary(meals = nutritionMeals, targets = nutritionTargets) {
+  const logged = meals.filter(meal => meal.status === 'Loggad')
+  const totals = logged.reduce((sum, meal) => ({
+    calories: sum.calories + meal.calories,
+    protein: sum.protein + meal.protein,
+    carbs: sum.carbs + meal.carbs,
+    fat: sum.fat + meal.fat
+  }), { calories: 0, protein: 0, carbs: 0, fat: 0 })
+  const nextMeal = meals.find(meal => meal.status !== 'Loggad') || meals.at(-1)
+  return {
+    logged,
+    totals,
+    nextMeal,
+    remainingCalories: Math.max(0, targets.calories - totals.calories),
+    macroRows: [
+      ['Protein', `${totals.protein} / ${targets.protein} g`, Math.round(totals.protein / targets.protein * 100), 'Muskelbevarande fokus'],
+      ['Kolhydrater', `${totals.carbs} / ${targets.carbs} g`, Math.round(totals.carbs / targets.carbs * 100), 'Bränsle för nästa pass'],
+      ['Fett', `${totals.fat} / ${targets.fat} g`, Math.round(totals.fat / targets.fat * 100), 'Stabil hormonbalans']
+    ]
+  }
+}
+
 const workoutIntelligence = {
   recoveryStatus: '82% redo · bröst och rygg gröna, axlar lätt belastade',
   previousSummary: 'Senast: 58 min · 18 set · 8 240 kg · 2 PR',
@@ -221,7 +253,12 @@ function MuscleVolume({compact=false,live={}}){
 
 function WorkoutLanding({programs,startProgram}){const today=programs.find(p=>p.id==='upper-a')||programs[0];const exercises=today.exercises.map(id=>exerciseBank.find(e=>e.id===id)).filter(Boolean);const targetMuscles=[...new Set(exercises.map(e=>e.muscle))].slice(0,4).join(' · ');const estimatedSets=exercises.reduce((sum,e)=>sum+Number((e.sets.match(/\d+/)||[3])[0]),0);return <div className="p4-grid workout-overview"><Card className="span8 atlas-hero-mobile workout-overview-hero"><span className="pill"><Dumbbell size={15}/>Dagens workout</span><h2>{today.name}</h2><p>En fokuserad pre-workout dashboard med allt beslutstöd samlat före första setet.</p><div className="overview-meta premium-dashboard-meta"><span><Clock size={14}/>55 min</span><span><Flame size={14}/>{workoutIntelligence.difficulty}</span><span><Target size={14}/>{targetMuscles}</span><span><HeartPulse size={14}/>{workoutIntelligence.recoveryStatus}</span></div><button className="p4-primary start-workout-large" onClick={()=>startProgram(today)}><Play size={19}/>START</button></Card><StatCard icon={Clock} label="Estimated duration" value="55 min" note="inkl. vila"/><StatCard icon={Flame} label="Difficulty" value={workoutIntelligence.difficulty} note="RPE 7–8"/><StatCard icon={Target} label="Expected volume" value={`${workoutIntelligence.expectedVolume.toLocaleString('sv-SE')} kg`} note={`${estimatedSets} arbetsset`}/><StatCard icon={HeartPulse} label="Recovery status" value="82%" note="existing readiness data"/><section className="panel span5"><SectionTitle eyebrow="Senaste pass" title="Previous workout summary"/><div className="summary-callout"><History size={20}/><strong>{workoutIntelligence.previousSummary}</strong><span>Repetera vinnande ordning och höj bara där kvaliteten känns hög.</span></div></section><section className="panel span7"><SectionTitle eyebrow="Dagens pass" title="Target muscles & övningar"/><div className="atlas-card-stack compact">{exercises.slice(0,5).map((e,i)=><div className="landing-exercise" key={e.id}><b>{i+1}</b><span><strong>{e.name}</strong><small>{e.muscle} · {e.equipment} · {e.sets}</small></span><ChevronRight size={17}/></div>)}</div></section></div>}
 
-function FoodView({notify}){return <div className="p4-grid"><Card className="span8 atlas-hero-mobile food-glow"><span className="pill"><Apple size={15}/>Nutrition</span><h2>1 420 / 2 050 kcal</h2><p>Premium food-vy med tydlig makrobalans och snabb loggning utan ny affärslogik.</p><ActionButton onClick={()=>notify('Måltid redo att loggas')}><Plus size={17}/>Logga måltid</ActionButton></Card><Card className="span4 center-card"><ProgressRing value={69} label="kcal"/></Card>{[['Protein','132 / 170 g',78],['Kolhydrater','146 / 210 g',70],['Fett','48 / 68 g',71]].map(m=><Card key={m[0]} className="span4 macro-premium"><span>{m[0]}</span><strong>{m[1]}</strong><div className="progress-track"><i style={{width:`${m[2]}%`}}/></div></Card>)}<Card className="span12"><AtlasSectionTitle eyebrow="Dagens logg" title="Måltider" action="Visa allt"/><div className="premium-list">{['Frukost · Yoghurt och bär · 410 kcal','Lunch · Kyckling och ris · 620 kcal','Mellanmål · Whey och banan · 390 kcal'].map(x=><div key={x}>{x}</div>)}</div></Card></div>}
+function FoodView({notify}){
+  const summary = buildNutritionSummary()
+  const calorieProgress = Math.round(summary.totals.calories / nutritionTargets.calories * 100)
+  const dinnerProteinGap = Math.max(0, nutritionTargets.protein - summary.totals.protein)
+  return <div className="p4-grid food-command-center"><Card className="span8 atlas-hero-mobile food-glow food-hero"><span className="pill"><Apple size={15}/>Sprint 6 · Nutrition</span><h2>{summary.totals.calories.toLocaleString('sv-SE')} / {nutritionTargets.calories.toLocaleString('sv-SE')} kcal</h2><p>Premium food command center med tydlig energistatus, nästa planerade måltid och makrobalans för träningsdagen.</p><div className="food-hero-actions"><ActionButton onClick={()=>notify('Måltid redo att loggas')}><Plus size={17}/>Logga måltid</ActionButton><ActionButton variant="secondary" onClick={()=>notify('Middagsförslag sparat')}>Planera middag</ActionButton></div></Card><Card className="span4 center-card nutrition-score-card"><ProgressRing value={calorieProgress} label="kcal"/><strong>{summary.remainingCalories} kcal kvar</strong><span>Nästa: {summary.nextMeal.title} · {summary.nextMeal.time}</span></Card>{summary.macroRows.map(([label,value,progress,note])=><Card key={label} className="span4 macro-premium sprint6-macro"><span>{label}</span><strong>{value}</strong><small>{note}</small><div className="progress-track"><i style={{width:`${Math.min(100,progress)}%`}}/></div><b>{progress}%</b></Card>)}<Card className="span7 meal-timeline-card"><AtlasSectionTitle eyebrow="Dagens logg" title="Måltider" action="Visa allt"/><div className="premium-list meal-timeline">{nutritionMeals.map(meal=><div key={meal.id} className={meal.status==='Loggad'?'logged':'planned'}><span><strong>{meal.label}</strong><small>{meal.time} · {meal.title}</small></span><b>{meal.calories} kcal</b><em>{meal.status}</em></div>)}</div></Card><Card className="span5 nutrition-coach-card"><AtlasSectionTitle eyebrow="Coach note" title="Kvällens fokus"/><div className="nutrition-coach-orb"><Utensils size={26}/></div><p>Håll middagen runt {summary.remainingCalories} kcal och sikta på minst {dinnerProteinGap} g protein för att nå dagsmålet utan att överfylla energibudgeten.</p><div className="nutrition-hydration"><Waves size={18}/><span><strong>2,1 / {nutritionTargets.water.toFixed(1).replace('.', ',')} L vatten</strong><small>Fyll på 700 ml före läggdags.</small></span></div></Card></div>
+}
 
 const recoveryMetrics=[
   {icon:Moon,label:'Sleep quality',value:'88%',note:'7 h 24 m · steady rhythm',tone:'positive'},

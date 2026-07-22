@@ -83,3 +83,21 @@ test('phase 4 Recovery route renders with primary app navigation intact', async 
     await cleanup()
   }
 })
+
+
+test('phase 4 Food route renders Sprint 6 nutrition command center', async () => {
+  const { modulePath, cleanup } = await bundle('src/AppPhase4.jsx')
+  try {
+    const { default: AppPhase4 } = await import(modulePath)
+    globalThis.localStorage = storageWith({ 'atlas-phase4': JSON.stringify({ page: 'food' }) })
+    const html = renderToString(React.createElement(AppPhase4))
+    assert.match(html, /Sprint 6 · Nutrition/)
+    assert.match(html, /Nutrition command center|food-command-center/)
+    assert.match(html, /Kvällens fokus/)
+    assert.match(html, /Planerad middag/)
+    assert.doesNotMatch(html, /undefined|null|NaN/)
+  } finally {
+    delete globalThis.localStorage
+    await cleanup()
+  }
+})
