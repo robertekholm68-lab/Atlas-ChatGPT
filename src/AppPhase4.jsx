@@ -3,6 +3,7 @@ import { ActionButton, BottomNavigation, Card, ExerciseRow, ProgressRing, Sectio
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Activity, Apple, Archive, ArrowDown, ArrowUp, BarChart3, Bot, CalendarDays, Check,
+  AlertCircle,
   ChevronRight, Clipboard, Copy, Download, Dumbbell, FileUp, Flame, GripVertical,
   HeartPulse, History, Library, Moon, ListFilter, MoreHorizontal, Pencil, Play, Plus,
   QrCode, Search, Share2, Sparkles, Star, Target, Trash2, Utensils, Trophy, Upload, X, Clock, Pause, SkipForward, Waves
@@ -130,12 +131,19 @@ const titleFor=p=>({dashboard:'Din träning',programs:'Program',exercises:'Övni
 const subtitleFor=p=>({dashboard:'Allt du behöver för nästa smarta beslut.',programs:'Skapa, redigera och starta dina program.',exercises:'Sök och filtrera bland övningar och maskiner.',calendar:'Se rytm, kontinuitet och planerade pass.',history:'Summering efter avslutat pass.',stats:'Volym, progression och muskelbalans.',food:'Energi, protein och måltider med premiumöversikt.',progress:'Volym, progression och muskelbalans.',recovery:'Sömn, readiness och belastning i en lugn OLED-vy.',coach:'Din smarta coachvy utan ny AI-logik.',session:'Logga varje set utan att lämna vyn.'}[p]||'')
 
 function Dashboard({programs,history,startProgram,setPage}){
-  const week=history.slice(0,4);const volume=week.reduce((s,h)=>s+h.volume,0);const sets=week.reduce((s,h)=>s+h.sets,0)
-  const recommended=programs.find(p=>p.id==='upper-a')||programs[0]
-  return <div className="p4-grid"><section className="p4-hero span8"><div><span className="pill"><Sparkles size={15}/>Smart rekommendation</span><h2>{recommended.name}</h2><p>Bröst och rygg är redo. ATLAS föreslår en liten progression i bänkpress och normal volym i dragövningarna.</p><div className="hero-actions"><button className="p4-primary" onClick={()=>startProgram(recommended)}><Play size={18}/>Starta pass</button><button className="p4-secondary" onClick={()=>setPage('programs')}>Visa upplägg</button></div></div><div className="readiness"><strong>84</strong><span>Redo</span></div></section>
+  const week=history.slice(0,4);const volume=week.reduce((sum,item)=>sum+item.volume,0);const sets=week.reduce((sum,item)=>sum+item.sets,0)
+  const recommended=programs.find(program=>program.id==='upper-a')||programs[0]
+  const savedPrograms=programs.filter(program=>!program.archived).slice(0,3)
+  const recent=history.slice(0,3)
+  const nextExercises=(recommended?.exercises||[]).map(id=>exerciseBank.find(exercise=>exercise.id===id)).filter(Boolean)
+  const muscleFocus=[...new Set(nextExercises.map(exercise=>exercise.muscle))].slice(0,4).join(' · ')
+  return <div className="p4-grid workout-command-center"><section className="p4-hero span8 workout-home-hero"><div><span className="pill"><Sparkles size={15}/>Dagens rekommendation</span><h2>{recommended?.name||'Välj workout'}</h2><p>{workoutIntelligence.notes} Fokus: {muscleFocus || 'helkropp'}.</p><div className="overview-meta"><span><Clock size={14}/>55 min</span><span><Dumbbell size={14}/>{nextExercises.length} övningar</span><span><Target size={14}/>{sets} set denna vecka</span></div><div className="hero-actions"><button className="p4-primary" onClick={()=>startProgram(recommended)}><Play size={18}/>Starta dagens pass</button><button className="p4-secondary" onClick={()=>setPage('programs')}>Förbered / redigera</button></div></div><div className="readiness"><strong>84</strong><span>Redo</span></div></section>
+    <section className="panel span4 resumable-card"><SectionTitle eyebrow="Status" title="Redo att starta"/><p>Inget aktivt pass väntar. Din viktigaste åtgärd är att starta dagens workout.</p><button className="p4-primary full" onClick={()=>startProgram(recommended)}><Play size={17}/>Starta nu</button></section>
     <Kpi icon={Dumbbell} label="Pass denna vecka" value={week.length}/><Kpi icon={Flame} label="Total volym" value={`${Math.round(volume/1000)} ton`}/><Kpi icon={Target} label="Arbetsset" value={sets}/><Kpi icon={Trophy} label="Nya PB" value="4"/>
-    <section className="panel span7"><SectionTitle eyebrow="Live från loggen" title="Veckovolym per muskel"/><MuscleVolume compact/></section>
-    <section className="panel span5"><SectionTitle eyebrow="Kommande" title="Veckoplan"/><div className="week-list">{[['Mån','Överkropp A','done'],['Ons','Underkropp A','today'],['Fre','Överkropp B',''],['Sön','Helkropp lätt','']].map(x=><div key={x[0]} className={x[2]}><b>{x[0]}</b><span>{x[1]}</span><small>{x[2]==='done'?'Genomfört':x[2]==='today'?'I dag':'Planerat'}</small></div>)}</div></section>
+    <section className="panel span7"><SectionTitle eyebrow="Dagens plan" title="Workout preparation"/><div className="prep-list">{nextExercises.map((exercise,index)=><div key={exercise.id}><b>{index+1}</b><span><strong>{exercise.name}</strong><small>{exercise.sets} · {exercise.muscle} · vila 90 sek · förra: {previousPerformance(exercise.id)}</small></span></div>)}</div></section>
+    <section className="panel span5"><SectionTitle eyebrow="Snabbstart" title="Quick start"/><div className="quick-start-grid">{savedPrograms.slice(0,3).map(program=><button key={program.id} onClick={()=>startProgram(program)}><Dumbbell size={18}/><span><strong>{program.name}</strong><small>{program.exercises.length} övningar · {program.type}</small></span></button>)}<button onClick={()=>setPage('exercises')}><Search size={18}/><span><strong>Övningsbank</strong><small>Sök eller välj övning</small></span></button></div></section>
+    <section className="panel span7"><SectionTitle eyebrow="Senaste aktivitet" title="Recent workouts"/><div className="recent-workouts">{recent.length?recent.map(item=><div key={item.id}><History size={18}/><span><strong>{item.name}</strong><small>{item.date} · {item.sets} set · {item.duration} min</small></span><b>{item.volume.toLocaleString('sv-SE')} kg</b></div>):<div className="empty-workout-state"><AlertCircle size={18}/>Inga sparade workouts ännu.</div>}</div></section>
+    <section className="panel span5"><SectionTitle eyebrow="Muscle load" title="Veckovolym"/><MuscleVolume compact/></section>
   </div>
 }
 
