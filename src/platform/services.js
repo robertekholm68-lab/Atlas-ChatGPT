@@ -1,4 +1,4 @@
-import { validateEmail } from './errors.js'
+import { validateEmail, validatePassword } from './errors.js'
 import { createSupabaseClient } from './supabaseClient.js'
 import { enqueueOfflineChange } from './syncEngine.js'
 
@@ -11,10 +11,10 @@ async function table(name) {
 }
 
 export const authService = {
-  async signUp({ email, password, profile }) { validateEmail(email); const supabase = await client(); return supabase?.auth.signUp({ email, password, options: { data: profile } }) },
-  async signIn({ email, password }) { validateEmail(email); const supabase = await client(); return supabase?.auth.signInWithPassword({ email, password }) },
+  async signUp({ email, password, profile }) { validateEmail(email); validatePassword(password); const supabase = await client(); return supabase?.auth.signUp({ email, password, options: { data: profile } }) },
+  async signIn({ email, password }) { validateEmail(email); validatePassword(password); const supabase = await client(); return supabase?.auth.signInWithPassword({ email, password }) },
   async forgotPassword(email) { validateEmail(email); const supabase = await client(); return supabase?.auth.resetPasswordForEmail(email) },
-  async resetPassword(password) { const supabase = await client(); return supabase?.auth.updateUser({ password }) },
+  async resetPassword(password) { validatePassword(password); const supabase = await client(); return supabase?.auth.updateUser({ password }) },
   async signOut() { const supabase = await client(); return supabase?.auth.signOut() },
   async session() { const supabase = await client(); return supabase?.auth.getSession() }
 }

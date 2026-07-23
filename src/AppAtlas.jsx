@@ -34,6 +34,7 @@ export default function AppAtlas() {
   const [module, setModule] = useState(loadModule)
   const [core, setCore] = useState(getAtlasState)
   const [showDevPanel, setShowDevPanel] = useState(false)
+  const devToolsEnabled = import.meta.env.DEV
 
   useEffect(() => {
     importLegacyWorkouts()
@@ -105,7 +106,7 @@ export default function AppAtlas() {
           <HeartPulse size={16} />
           Återhämtning {recovery}%
         </span>
-        <button
+        {devToolsEnabled && <button
           type="button"
           className={`atlas-dev-toggle ${showDevPanel ? 'active' : ''}`}
           onClick={() => setShowDevPanel(value => !value)}
@@ -114,7 +115,7 @@ export default function AppAtlas() {
         >
           <Bug size={17}/>
           <span>Core</span>
-        </button>
+        </button>}
       </div>
 
       {module === 'training' && <AppPhase4 />}
@@ -122,7 +123,7 @@ export default function AppAtlas() {
       {module === 'recovery' && <RecoveryPlatform core={core} />}
       {module === 'intelligence' && <AppAICoach />}
       {module === 'production' && <ProductionPlatform />}
-      {showDevPanel && <AtlasDevPanel core={core} onClose={() => setShowDevPanel(false)}/>} 
+      {devToolsEnabled && showDevPanel && <AtlasDevPanel core={core} onClose={() => setShowDevPanel(false)}/>} 
     </div>
   )
 }
