@@ -98,3 +98,17 @@ test('nutrition platform renders dashboard logging recipes and integrations', as
     await cleanup()
   }
 })
+
+test('recovery platform renders premium recovery architecture', async () => {
+  const { modulePath, cleanup } = await bundle('src/RecoveryPlatform.jsx')
+  try {
+    const { default: RecoveryPlatform } = await import(modulePath)
+    const html = renderToString(React.createElement(RecoveryPlatform, { core: { recovery: { score: 67, muscles: {} }, workouts: [] } }))
+    for (const label of ['Recovery Platform 1.0', 'Recovery command center', 'Interactive Muscle Recovery Map', 'Muscle detail', 'Recovery Timeline', 'Future-ready architecture']) {
+      assert.match(html, new RegExp(label))
+    }
+    assert.doesNotMatch(html, /undefined|null|NaN/)
+  } finally {
+    await cleanup()
+  }
+})
