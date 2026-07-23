@@ -1,23 +1,24 @@
-import { ChevronRight } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ChevronRight, Loader2, Sparkles } from 'lucide-react'
 
-export function Card({ children, className = '', as: Tag = 'section' }) {
-  return <Tag className={`atlas-card ${className}`.trim()}>{children}</Tag>
+export function Card({ children, className = '', as: Tag = 'section', elevated = false }) {
+  return <Tag className={`atlas-card motion-scale-in ${elevated ? 'is-elevated' : ''} ${className}`.trim()}>{children}</Tag>
 }
 
 export function SectionTitle({ eyebrow, title, action, onAction }) {
-  return <div className="atlas-section-title"><div>{eyebrow && <span>{eyebrow}</span>}<h3>{title}</h3></div>{action && <button type="button" onClick={onAction}>{action}<ChevronRight size={16}/></button>}</div>
+  return <div className="atlas-section-title"><div>{eyebrow && <span>{eyebrow}</span>}<h3>{title}</h3></div>{action && <button type="button" className="atlas-link-button" onClick={onAction}>{action}<ChevronRight size={16}/></button>}</div>
 }
 
-export function ActionButton({ children, variant = 'primary', className = '', ...props }) {
-  return <button type="button" className={`atlas-button ${variant} ${className}`.trim()} {...props}>{children}</button>
+export function ActionButton({ children, variant = 'primary', state = 'idle', className = '', ...props }) {
+  const Icon = state === 'loading' ? Loader2 : state === 'success' ? CheckCircle2 : state === 'error' ? AlertCircle : null
+  return <button type="button" aria-busy={state === 'loading'} disabled={props.disabled || state === 'loading'} className={`atlas-button ${variant} is-${state} ${className}`.trim()} {...props}>{Icon && <Icon size={17} className={state === 'loading' ? 'spin' : ''}/>}<span>{children}</span></button>
 }
 
 export function StatCard({ icon: Icon, label, value, note, tone = '' }) {
-  return <Card as="article" className="atlas-stat-card"><div className="atlas-stat-icon">{Icon && <Icon size={20}/>}</div><span>{label}</span><strong>{value}</strong>{note && <small className={tone}>{note}</small>}</Card>
+  return <Card as="article" className="atlas-stat-card"><div className="atlas-stat-icon">{Icon && <Icon size={20} strokeWidth={2}/>}</div><span>{label}</span><strong>{value}</strong>{note && <small className={tone}>{note}</small>}</Card>
 }
 
 export function ProgressRing({ value, label, size = 132 }) {
-  return <div className="atlas-progress-ring" style={{ '--value': `${value * 3.6}deg`, width: size, height: size }}><strong>{value}</strong><span>{label}</span></div>
+  return <div className="atlas-progress-ring motion-scale-in" style={{ '--value': `${value * 3.6}deg`, width: size, height: size }} role="img" aria-label={`${label}: ${value} procent`}><strong>{value}</strong><span>{label}</span></div>
 }
 
 export function WorkoutCard({ title, meta, tag, onStart }) {
@@ -29,5 +30,13 @@ export function ExerciseRow({ index, title, subtitle, value, children, onClick }
 }
 
 export function BottomNavigation({ items, active, onChange }) {
-  return <nav className="atlas-bottom-nav" aria-label="Primär mobilnavigation">{items.map(({ id, label, icon: Icon }) => <button key={id} type="button" className={active === id ? 'active' : ''} onClick={() => onChange(id)}><Icon size={20}/><span>{label}</span></button>)}</nav>
+  return <nav className="atlas-bottom-nav" aria-label="Primär mobilnavigation">{items.map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-current={active === id ? 'page' : undefined} className={active === id ? 'active' : ''} onClick={() => onChange(id)}><Icon size={20} strokeWidth={2}/><span>{label}</span></button>)}</nav>
+}
+
+export function SkeletonBlock({ className = '', label = 'Laddar innehåll' }) {
+  return <div className={`skeleton ${className}`.trim()} role="status" aria-label={label}/>
+}
+
+export function EmptyState({ icon: Icon = Sparkles, title, children, action, onAction }) {
+  return <div className="empty-state-premium motion-scale-in"><Icon size={32}/><strong>{title}</strong>{children && <p>{children}</p>}{action && <ActionButton variant="secondary" onClick={onAction}>{action}</ActionButton>}</div>
 }
