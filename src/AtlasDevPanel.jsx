@@ -12,9 +12,9 @@ export default function AtlasDevPanel({ core, onClose }) {
     .map(([name, value]) => ({ name, fatigue: Number(value?.fatigue || 0), readiness: Math.max(0, Math.round(100 - Number(value?.fatigue || 0))) }))
     .sort((a, b) => a.readiness - b.readiness)
 
-  return <aside className="atlas-dev-panel" aria-label="ATLAS utvecklarpanel">
+  return <aside className="atlas-dev-panel" aria-label="ASKR utvecklarpanel">
     <header>
-      <div><span>Intern diagnostik</span><h2>ATLAS Core</h2></div>
+      <div><span>Intern diagnostik</span><h2>ASKR Core</h2></div>
       <button type="button" onClick={onClose} aria-label="Stäng utvecklarpanelen"><X size={19}/></button>
     </header>
 

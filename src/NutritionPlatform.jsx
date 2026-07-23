@@ -7,7 +7,7 @@ import {
 import './nutritionPlatform.css'
 
 export const foodCatalog = [
-  { id: 'chicken-rice', name: 'Kyckling med jasminris', brand: 'Atlas demo', serving: '1 portion', calories: 620, protein: 48, carbs: 72, fat: 14, fiber: 6, sugar: 5, saturatedFat: 3, sodium: 760, favorite: true, recent: true, barcode: null, provider: 'local' },
+  { id: 'chicken-rice', name: 'Kyckling med jasminris', brand: 'ASKR demo', serving: '1 portion', calories: 620, protein: 48, carbs: 72, fat: 14, fiber: 6, sugar: 5, saturatedFat: 3, sodium: 760, favorite: true, recent: true, barcode: null, provider: 'local' },
   { id: 'greek-yogurt', name: 'Grekisk yoghurt 2%', brand: 'Egen favorit', serving: '250 g', calories: 210, protein: 24, carbs: 12, fat: 6, fiber: 0, sugar: 10, saturatedFat: 3.5, sodium: 90, favorite: true, recent: true, barcode: null, provider: 'local' },
   { id: 'banana', name: 'Banan', brand: 'Råvara', serving: '1 st', calories: 105, protein: 1, carbs: 27, fat: 0, fiber: 3, sugar: 14, saturatedFat: 0, sodium: 1, favorite: false, recent: true, barcode: null, provider: 'local' },
   { id: 'coke', name: 'Coca-Cola', brand: 'Barcode-ready', serving: '330 ml', calories: 139, protein: 0, carbs: 35, fat: 0, fiber: 0, sugar: 35, saturatedFat: 0, sodium: 15, favorite: false, recent: false, barcode: 'placeholder', provider: 'local' },

@@ -121,15 +121,15 @@ export default function AppIntelligence() {
 
   return <div className="atlas-i-shell">
     <aside className="atlas-i-sidebar">
-      <div className="atlas-i-brand"><span>A</span><div><strong>ATLAS</strong><small>INTELLIGENCE</small></div></div>
+      <div className="atlas-i-brand"><span><img className="brand-logo" src="/assets/program-covers/upper-a.svg" alt="ASKR logo" /></span><div><strong>ASKR</strong><small>INTELLIGENCE</small></div></div>
       <nav>{nav.map(([id, label, Icon]) => <button key={id} className={page === id ? 'active' : ''} onClick={() => setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav>
       <div className="atlas-i-user"><span>RE</span><div><strong>{profile.name}</strong><small>{COACH_MODES[profile.mode].label} coach</small></div></div>
     </aside>
 
     <main className="atlas-i-main">
       <header className="atlas-i-topbar">
-        <div><p>ATLAS Intelligence Engine</p><h1>{pageTitle(page)}</h1></div>
-        <div className="engine-status"><span/><strong>Lokal coach aktiv</strong><small>{profile.coreSummary.workoutCount} pass i ATLAS Core</small></div>
+        <div><p>ASKR Intelligence Engine</p><h1>{pageTitle(page)}</h1></div>
+        <div className="engine-status"><span/><strong>Lokal coach aktiv</strong><small>{profile.coreSummary.workoutCount} pass i ASKR Core</small></div>
       </header>
 
       {page === 'today' && <AtlasHomeScreen profile={profile} core={core} recommendation={coachRecommendation} readiness={readiness} setPage={setPage}/>} 
@@ -172,7 +172,7 @@ function TodayPage({ profile, decision, readiness, acceptDecision, setPage }) {
     </section>
 
     <section className="i-panel span-12">
-      <SectionTitle icon={CalendarDays} eyebrow="Planen idag" title="Så här anpassar ATLAS passet"/>
+      <SectionTitle icon={CalendarDays} eyebrow="Planen idag" title="Så här anpassar ASKR passet"/>
       <div className="adaptation-grid">
         <Adaptation title="Pass" value={decision.action === 'recovery' ? 'Återhämtning' : decision.action.includes('upper') ? 'Överkropp' : 'Modifierat pass'} />
         <Adaptation title="Volym" value={decision.volumeChange === 0 ? 'Oförändrad' : `${decision.volumeChange}%`} />
@@ -195,7 +195,7 @@ function CoachPage({ profile, recommendation, messages, setMessages, setPage }) 
   const ctx = recommendation.context || {}
   return <div className="coach-page proactive-coach">
     <section className="coach-context-card">
-      <div><span>God morgon, {ctx.firstName || profile.name}</span><h2>{recommendation.insufficientData ? 'ATLAS behöver mer underlag' : 'Dagens rådgivning är klar'}</h2><p>{recommendation.insufficientData ? 'Logga dagsform och pass för mer personlig precision.' : `Energi ${profile.checkIn.energy}/10 · Sömn ${profile.checkIn.sleep} h · Motivation ${profile.checkIn.motivation}/10 · Stress ${profile.checkIn.stress}/10 · Återhämtning ${ctx.recoveryScore ?? profile.recovery.total}%`}</p></div>
+      <div><span>God morgon, {ctx.firstName || profile.name}</span><h2>{recommendation.insufficientData ? 'ASKR behöver mer underlag' : 'Dagens rådgivning är klar'}</h2><p>{recommendation.insufficientData ? 'Logga dagsform och pass för mer personlig precision.' : `Energi ${profile.checkIn.energy}/10 · Sömn ${profile.checkIn.sleep} h · Motivation ${profile.checkIn.motivation}/10 · Stress ${profile.checkIn.stress}/10 · Återhämtning ${ctx.recoveryScore ?? profile.recovery.total}%`}</p></div>
       <div className="coach-confidence"><strong>{Math.round((recommendation.confidence || 0) * 100)}%</strong><span>{recommendation.confidenceLabel} säkerhet</span></div>
     </section>
 
@@ -211,14 +211,14 @@ function CoachPage({ profile, recommendation, messages, setMessages, setPage }) 
 
     <section className="coach-support-grid">
       <SupportCard label="Veckan" value={`${ctx.weeklyCompletion ?? 0} pass`} note="Senaste 7 dagarna"/>
-      <SupportCard label="Senaste pass" value={ctx.latestWorkout?.name || 'Saknas'} note={ctx.latestWorkout ? 'Från ATLAS Core' : 'Logga ett pass'}/>
+      <SupportCard label="Senaste pass" value={ctx.latestWorkout?.name || 'Saknas'} note={ctx.latestWorkout ? 'Från ASKR Core' : 'Logga ett pass'}/>
       <SupportCard label="Mål" value={ctx.activeGoal || 'Ej valt'} note="Aktiv målbild"/>
       <SupportCard label="Datakvalitet" value={recommendation.dataQuality?.label || 'okänd'} note={`${recommendation.dataQuality?.signals || 0}/${recommendation.dataQuality?.possibleSignals || 0} signaler`}/>
     </section>
 
     <section className="i-panel coach-followup"><SectionTitle icon={MessageCircle} eyebrow="Chat för följdfrågor" title="Fråga om beslutet"/>
       <div className="suggestion-row">{prompts.map(s=><button key={s} onClick={()=>send(s)}>{s}</button>)}</div>
-      <section className="chat-window compact">{messages.map((m,i)=><div key={i} className={`chat-message ${m.role}`}><span>{m.role==='coach'?'ATLAS':'Du'}</span><p>{m.text}</p></div>)}</section>
+      <section className="chat-window compact">{messages.map((m,i)=><div key={i} className={`chat-message ${m.role}`}><span>{m.role==='coach'?'ASKR':'Du'}</span><p>{m.text}</p></div>)}</section>
       <div className="coach-input"><input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ställ en följdfråga om dagens rekommendation…"/><button onClick={()=>send()}><ArrowRight size={20}/></button></div>
     </section>
   </div>
@@ -277,7 +277,7 @@ function RecoveryPage({ profile, core, updateCheckIn, readiness }) {
       <div className={`recovery-advice ${recovery.score<50?'warning':''}`}><ShieldCheck size={24}/><div><strong>{recovery.score>=75?'Klar för kvalitetsträning':recovery.score>=50?'Träna med reducerad volym':'Prioritera återhämtning'}</strong><p>{recovery.score>=75?KNOWLEDGE_BASE.readiness.high:recovery.score>=50?KNOWLEDGE_BASE.readiness.medium:KNOWLEDGE_BASE.readiness.low}</p></div></div>
     </section>
 
-    <section className="i-panel span-7"><SectionTitle icon={HeartPulse} eyebrow="Muskelåterhämtning" title="Live från ATLAS Core"/>
+    <section className="i-panel span-7"><SectionTitle icon={HeartPulse} eyebrow="Muskelåterhämtning" title="Live från ASKR Core"/>
       {recovery.hasCoreRecovery ? <div className="recovery-muscle-grid">{recovery.muscles.map(muscle=><article key={muscle.name} className={muscle.readiness<50?'loaded':''}><div><strong>{muscle.name}</strong><small>{muscle.fatigue}% belastning</small></div><b>{muscle.readiness}%</b><div><i style={{width:`${muscle.readiness}%`}}/></div></article>)}</div> : <p className="atlas-empty">Ingen lokal muskelåterhämtning loggad ännu. Avsluta ett pass för att fylla kroppskartan.</p>}
     </section>
 
@@ -300,17 +300,17 @@ function DecisionPage({ decisions, current, acceptDecision }) {
     <section className="i-panel span-8"><SectionTitle icon={ClipboardList} eyebrow="Decision Engine" title="Beslutshistorik"/>
       <div className="decision-list">{all.map((d,i)=><div key={`${d.id}-${i}`}><span className={d.accepted?'accepted':''}>{d.accepted?<Check size={17}/>:<Brain size={17}/>}</span><div><strong>{d.title}</strong><small>{new Date(d.createdAt).toLocaleString('sv-SE')} · {d.category}</small><p>{d.reason}</p></div></div>)}</div>
     </section>
-    <section className="i-panel span-4"><SectionTitle icon={History} eyebrow="Aktuellt beslut" title="Underlag"/><div className="evidence-stack">{current.evidence.map(x=><span key={x}>{x}</span>)}</div><h4>ATLAS slutsats</h4><p>{current.reason}</p><button className="i-primary full" onClick={acceptDecision}><Check size={17}/> Acceptera</button></section>
+    <section className="i-panel span-4"><SectionTitle icon={History} eyebrow="Aktuellt beslut" title="Underlag"/><div className="evidence-stack">{current.evidence.map(x=><span key={x}>{x}</span>)}</div><h4>ASKR slutsats</h4><p>{current.reason}</p><button className="i-primary full" onClick={acceptDecision}><Check size={17}/> Acceptera</button></section>
   </div>
 }
 
 function SettingsPage({ profile, setProfile, notify }) {
   return <div className="i-grid">
-    <section className="i-panel span-7"><SectionTitle icon={UserRound} eyebrow="Coachpersonlighet" title="Hur ska ATLAS kommunicera?"/>
+    <section className="i-panel span-7"><SectionTitle icon={UserRound} eyebrow="Coachpersonlighet" title="Hur ska ASKR kommunicera?"/>
       <div className="mode-grid">{Object.entries(COACH_MODES).map(([key,mode])=><button key={key} className={profile.mode===key?'active':''} onClick={()=>setProfile(p=>({...p,mode:key}))}><strong>{mode.label}</strong><span>{mode.prefix}</span></button>)}</div>
     </section>
-    <section className="i-panel span-5"><SectionTitle icon={Brain} eyebrow="AI-adapter" title="Framtida anslutning"/><div className="adapter-card"><span><Bot size={24}/></span><div><strong>Lokal kunskapsmotor</strong><small>Aktiv nu · ATLAS Core ansluten</small></div><Check size={19}/></div><div className="adapter-card disabled"><span><MessageCircle size={24}/></span><div><strong>Claude / ChatGPT</strong><small>Adapter förberedd, ingen API-nyckel lagras</small></div></div><button className="i-secondary full" onClick={()=>notify('Extern AI kopplas in i en senare fas')}>Visa integrationsplan</button></section>
-    <section className="i-panel span-12"><SectionTitle icon={AlertTriangle} eyebrow="Säkerhet" title="Coachens gränser"/><p>ATLAS ger träningsstöd och ersätter inte medicinsk bedömning. Skarp eller ökande smärta, neurologiska symtom, bröstsmärta eller allvarlig sjukdom ska bedömas av vården.</p></section>
+    <section className="i-panel span-5"><SectionTitle icon={Brain} eyebrow="AI-adapter" title="Framtida anslutning"/><div className="adapter-card"><span><Bot size={24}/></span><div><strong>Lokal kunskapsmotor</strong><small>Aktiv nu · ASKR Core ansluten</small></div><Check size={19}/></div><div className="adapter-card disabled"><span><MessageCircle size={24}/></span><div><strong>Claude / ChatGPT</strong><small>Adapter förberedd, ingen API-nyckel lagras</small></div></div><button className="i-secondary full" onClick={()=>notify('Extern AI kopplas in i en senare fas')}>Visa integrationsplan</button></section>
+    <section className="i-panel span-12"><SectionTitle icon={AlertTriangle} eyebrow="Säkerhet" title="Coachens gränser"/><p>ASKR ger träningsstöd och ersätter inte medicinsk bedömning. Skarp eller ökande smärta, neurologiska symtom, bröstsmärta eller allvarlig sjukdom ska bedömas av vården.</p></section>
   </div>
 }
 
@@ -318,5 +318,5 @@ function Metric({icon:Icon,label,value,note}){return <article className="i-metri
 function SectionTitle({icon:Icon,eyebrow,title}){return <div className="section-title"><span><Icon size={19}/></span><div><small>{eyebrow}</small><h3>{title}</h3></div></div>}
 function Adaptation({title,value}){return <div><small>{title}</small><strong>{value}</strong></div>}
 function Slider({label,value,onChange}){return <label className="check-slider"><span>{label}<b>{value}/10</b></span><input type="range" min="1" max="10" value={value} onChange={e=>onChange(Number(e.target.value))}/></label>}
-function pageTitle(page){return ({today:'Dagens intelligens',coach:'ATLAS Coach',goal:'Goal Intelligence',recovery:'Recovery Engine',decisions:'Decision History',settings:'Coachinställningar'})[page]}
+function pageTitle(page){return ({today:'Dagens intelligens',coach:'ASKR Coach',goal:'Goal Intelligence',recovery:'Recovery Engine',decisions:'Decision History',settings:'Coachinställningar'})[page]}
 function muscleLabel(key){return ({chest:'Bröst',back:'Rygg',legs:'Ben',shoulders:'Axlar',arms:'Armar',core:'Core'})[key]||key}
