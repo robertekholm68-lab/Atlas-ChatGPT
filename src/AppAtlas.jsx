@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Apple, Bot, Bug, Dumbbell, HeartPulse, BatteryCharging } from 'lucide-react'
+import { Apple, Bot, Bug, Cloud, Dumbbell, HeartPulse, BatteryCharging } from 'lucide-react'
 import AppPhase4 from './AppPhase4'
 import AppAICoach from './AppAICoach'
 import AtlasDevPanel from './AtlasDevPanel'
 import NutritionPlatform from './NutritionPlatform'
 import RecoveryPlatform from './RecoveryPlatform'
+import ProductionPlatform from './platform/ProductionPlatform'
 import { getAtlasState, subscribeAtlas } from './core/atlasStore'
 import { recordCompletedWorkout } from './core/eventEngine'
 import { installPhase4Bridge } from './core/phase4Bridge'
@@ -92,6 +93,14 @@ export default function AppAtlas() {
           <Bot size={18} />
           <span>Coach</span>
         </button>
+        <button
+          type="button"
+          className={module === 'production' ? 'active' : ''}
+          onClick={() => changeModule('production')}
+        >
+          <Cloud size={18} />
+          <span>Cloud</span>
+        </button>
         <span className="atlas-core-status" title={currentDecision?.title || 'Beräknas lokalt från genomförda set och RPE'}>
           <HeartPulse size={16} />
           Återhämtning {recovery}%
@@ -112,6 +121,7 @@ export default function AppAtlas() {
       {module === 'nutrition' && <NutritionPlatform />}
       {module === 'recovery' && <RecoveryPlatform core={core} />}
       {module === 'intelligence' && <AppAICoach />}
+      {module === 'production' && <ProductionPlatform />}
       {showDevPanel && <AtlasDevPanel core={core} onClose={() => setShowDevPanel(false)}/>} 
     </div>
   )
