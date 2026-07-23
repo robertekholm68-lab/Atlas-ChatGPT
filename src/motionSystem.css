@@ -1,0 +1,66 @@
+:root {
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-slow: 420ms;
+  --motion-ease: cubic-bezier(.2,.8,.2,1);
+  --motion-spring: cubic-bezier(.16,1,.3,1);
+  --elevation-rest: 0 18px 48px rgba(0,0,0,.24);
+  --elevation-hover: 0 28px 78px rgba(0,0,0,.34);
+  --focus-ring: 0 0 0 3px rgba(168,240,106,.22);
+}
+
+.motion-fade-in { animation: atlasFade var(--motion-base) var(--motion-ease) both; }
+.motion-slide-up { animation: atlasSlideUp var(--motion-slow) var(--motion-spring) both; }
+.motion-scale-in { animation: atlasScaleIn var(--motion-base) var(--motion-spring) both; }
+.motion-expand { animation: atlasExpand var(--motion-slow) var(--motion-spring) both; transform-origin: top; }
+.motion-stagger > * { animation: atlasSlideUp var(--motion-slow) var(--motion-spring) both; }
+.motion-stagger > *:nth-child(1) { animation-delay: 20ms; }
+.motion-stagger > *:nth-child(2) { animation-delay: 70ms; }
+.motion-stagger > *:nth-child(3) { animation-delay: 120ms; }
+.motion-stagger > *:nth-child(4) { animation-delay: 170ms; }
+.motion-stagger > *:nth-child(5) { animation-delay: 220ms; }
+.motion-stagger > *:nth-child(n+6) { animation-delay: 260ms; }
+
+.page-stage > * { animation: atlasPageIn var(--motion-slow) var(--motion-spring) both; }
+
+:where(button, .metric-card, .panel, .hero-card, .exercise-card, .set-stat, .asset-frame, .profile-card) {
+  transition: transform var(--motion-base) var(--motion-ease), box-shadow var(--motion-base) var(--motion-ease), border-color var(--motion-base) var(--motion-ease), background var(--motion-base) var(--motion-ease), opacity var(--motion-base) var(--motion-ease), filter var(--motion-base) var(--motion-ease);
+}
+
+:where(.panel, .metric-card, .hero-card, .exercise-command-card, .log-card, .rest-card, .muscle-session-card, .notes-card, .next-card, .detail-hero, .records-card, .history-card, .completion-card):hover {
+  box-shadow: var(--elevation-hover);
+  border-color: rgba(168,240,106,.18);
+}
+
+:where(button):not(:disabled) { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+:where(button):not(:disabled):active { transform: translateY(1px) scale(.985); }
+:where(button):disabled { opacity: .48; cursor: not-allowed; filter: grayscale(.35); }
+:where(.primary-button, .nav-button, .icon-button, .text-button, .workout-tabs button, .filter-rail button, .smart-filters button, .quick-actions button, .secondary-actions button, .rest-card button, .prompt-grid button, .exercise-card) { position: relative; overflow: hidden; }
+:where(.primary-button, .icon-button, .quick-actions button, .secondary-actions button, .rest-card button, .prompt-grid button, .exercise-card)::after {
+  content: ""; position: absolute; inset: 0; opacity: 0; pointer-events: none;
+  background: radial-gradient(circle at center, rgba(255,255,255,.22), transparent 42%);
+  transform: scale(.7); transition: opacity var(--motion-fast) ease, transform var(--motion-base) ease;
+}
+:where(.primary-button, .icon-button, .quick-actions button, .secondary-actions button, .rest-card button, .prompt-grid button, .exercise-card):active::after { opacity: 1; transform: scale(1.6); }
+:where(button, input, textarea):focus-visible { outline: 0; box-shadow: var(--focus-ring), 0 0 0 1px var(--accent); }
+
+.skeleton { position: relative; overflow: hidden; background: rgba(255,255,255,.055); border-radius: var(--radius-md); min-height: 120px; }
+.skeleton::after { content:""; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent); animation: atlasShimmer 1.4s infinite; }
+.empty-state-premium { border:1px dashed rgba(168,240,106,.22); background:linear-gradient(145deg,rgba(168,240,106,.08),rgba(118,224,204,.045)); border-radius:var(--radius-md); padding:28px; text-align:center; color:var(--muted); }
+.empty-state-premium svg { color: var(--accent); margin-bottom: 10px; }
+.empty-state-premium strong { display:block; color:var(--text); font-size:20px; margin-bottom:6px; }
+.success-moment { animation: atlasSuccess 700ms var(--motion-spring) both; }
+.error-banner { border:1px solid rgba(255,127,127,.28); background:rgba(255,127,127,.09); color:#ffd2d2; border-radius:16px; padding:14px 16px; line-height:1.5; }
+
+@keyframes atlasFade { from { opacity: 0; } }
+@keyframes atlasSlideUp { from { opacity:0; transform: translateY(14px); } }
+@keyframes atlasScaleIn { from { opacity:0; transform: scale(.96); } }
+@keyframes atlasExpand { from { opacity:0; transform: scaleY(.96); max-height: 0; } to { max-height: 900px; } }
+@keyframes atlasPageIn { from { opacity:0; transform: translateY(12px) scale(.992); filter: blur(3px); } }
+@keyframes atlasShimmer { to { transform: translateX(100%); } }
+@keyframes atlasSuccess { 0% { transform: scale(.94); opacity:.6; } 55% { transform: scale(1.03); } 100% { transform: scale(1); opacity:1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
+  .page-stage > *, .motion-fade-in, .motion-slide-up, .motion-scale-in, .motion-expand, .motion-stagger > * { animation: none !important; }
+}

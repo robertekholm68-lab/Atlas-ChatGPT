@@ -180,3 +180,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   .hero-card { display:grid; }.readiness-ring,.macro-donut { margin-top:8px; }.hero-actions { align-items:stretch; flex-direction:column; gap:5px; }.text-button { justify-content:center; }
   .muscle-grid { grid-template-columns:1fr; }.meal-list > div { align-items:flex-start; }.topbar-actions { display:none; }
 }
+
+/* Sprint 12 premium polish layer */
+.primary-button.is-loading,.atlas-button.is-loading{cursor:progress}.spin{animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.metric-card:hover,.hero-card:hover,.panel:hover{transform:translateY(-2px)}
+.progress-track>span,.chart-day div,.timeline-bars i,.mini-bars i{animation:atlasGrowX var(--motion-slow) var(--motion-spring) both;transform-origin:left bottom}.chart-day div,.timeline-bars i,.mini-bars i{animation-name:atlasGrowY;transform-origin:bottom}
+@keyframes atlasGrowX{from{transform:scaleX(.15);opacity:.55}}@keyframes atlasGrowY{from{transform:scaleY(.12);opacity:.55}}
+.nav-button svg,.icon-button svg,.primary-button svg,.text-button svg,.status-pill svg{stroke-width:2;flex:0 0 auto}.toast{animation:toastIn .25s ease,atlasSuccess .55s var(--motion-spring)}
+@media (max-width: 720px){button,.primary-button,.text-button,.icon-button,.nav-button,.profile-card{min-height:44px}.main-content{padding-left:max(15px,env(safe-area-inset-left));padding-right:max(15px,env(safe-area-inset-right));}.mobile-nav{bottom:max(10px,env(safe-area-inset-bottom));}}
