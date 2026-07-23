@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Bot, Bug, Dumbbell, HeartPulse } from 'lucide-react'
+import { Apple, Bot, Bug, Dumbbell, HeartPulse } from 'lucide-react'
 import AppPhase4 from './AppPhase4'
 import AppIntelligence from './AppIntelligence'
 import AtlasDevPanel from './AtlasDevPanel'
+import NutritionPlatform from './NutritionPlatform'
 import { getAtlasState, subscribeAtlas } from './core/atlasStore'
 import { recordCompletedWorkout } from './core/eventEngine'
 import { installPhase4Bridge } from './core/phase4Bridge'
@@ -68,6 +69,14 @@ export default function AppAtlas() {
         </button>
         <button
           type="button"
+          className={module === 'nutrition' ? 'active' : ''}
+          onClick={() => changeModule('nutrition')}
+        >
+          <Apple size={18} />
+          <span>Kost</span>
+        </button>
+        <button
+          type="button"
           className={module === 'intelligence' ? 'active' : ''}
           onClick={() => changeModule('intelligence')}
         >
@@ -90,7 +99,9 @@ export default function AppAtlas() {
         </button>
       </div>
 
-      {module === 'training' ? <AppPhase4 /> : <AppIntelligence />}
+      {module === 'training' && <AppPhase4 />}
+      {module === 'nutrition' && <NutritionPlatform />}
+      {module === 'intelligence' && <AppIntelligence />}
       {showDevPanel && <AtlasDevPanel core={core} onClose={() => setShowDevPanel(false)}/>} 
     </div>
   )
