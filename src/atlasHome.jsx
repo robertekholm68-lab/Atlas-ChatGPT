@@ -25,7 +25,7 @@ export function AtlasHomeScreen({ profile, core, recommendation, readiness, setP
   const recoveryMetric = vm.metrics.find(metric => metric.id === 'recovery')
 
   return <div className="atlas-home-page">
-    <header className="atlas-home-header"><div className="atlas-home-brand"><span>A</span><div><strong>ATLAS</strong><small>Performance OS</small></div></div><div className="atlas-header-status"><span>{vm.greeting}</span><button type="button" className="atlas-avatar-button" aria-label="Öppna profil"><UserRound size={19}/></button></div></header>
+    <header className="atlas-home-header"><div className="atlas-home-brand"><img src="/assets/branding/logos/askr-wordmark-horizontal.png" alt="ASKR"/></div><div className="atlas-header-status"><span>{vm.greeting}</span><button type="button" className="atlas-avatar-button" aria-label="Öppna profil"><UserRound size={19}/></button></div></header>
 
     <section className={`atlas-home-hero ${vm.insufficient ? 'insufficient' : ''}`}>
       <div className="atlas-hero-copy"><span className="atlas-kicker">Dagens beslut</span><h1>{vm.headline}</h1><p>{vm.explanation}</p><div className="atlas-confidence"><TrendingUp size={16}/>{vm.confidence}</div><div className="atlas-actions"><AtlasPrimaryButton onClick={() => go(vm.primaryTarget)}><Zap size={18}/>{vm.primaryLabel}</AtlasPrimaryButton>{vm.secondary && <AtlasSecondaryButton onClick={() => go(vm.secondary.target)}>{vm.secondary.label}<ArrowRight size={17}/></AtlasSecondaryButton>}</div></div>
