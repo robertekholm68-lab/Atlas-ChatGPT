@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Apple, Bot, Bug, Dumbbell, HeartPulse, BatteryCharging } from 'lucide-react'
 import AppPhase4 from './AppPhase4'
-import AppIntelligence from './AppIntelligence'
+import AppAICoach from './AppAICoach'
 import AtlasDevPanel from './AtlasDevPanel'
 import NutritionPlatform from './NutritionPlatform'
 import RecoveryPlatform from './RecoveryPlatform'
@@ -111,7 +111,7 @@ export default function AppAtlas() {
       {module === 'training' && <AppPhase4 />}
       {module === 'nutrition' && <NutritionPlatform />}
       {module === 'recovery' && <RecoveryPlatform core={core} />}
-      {module === 'intelligence' && <AppIntelligence />}
+      {module === 'intelligence' && <AppAICoach />}
       {showDevPanel && <AtlasDevPanel core={core} onClose={() => setShowDevPanel(false)}/>} 
     </div>
   )
