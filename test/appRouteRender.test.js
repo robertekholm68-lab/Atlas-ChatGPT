@@ -83,3 +83,18 @@ test('phase 4 Recovery route renders with primary app navigation intact', async 
     await cleanup()
   }
 })
+
+
+test('nutrition platform renders dashboard logging recipes and integrations', async () => {
+  const { modulePath, cleanup } = await bundle('src/NutritionPlatform.jsx')
+  try {
+    const { default: NutritionPlatform } = await import(modulePath)
+    const html = renderToString(React.createElement(NutritionPlatform))
+    for (const label of ['Nutrition Platform 1.0', 'Snabb loggning', 'Måltider idag', 'Recept och ingredienser', 'Nutrition trends', 'Träningsdagens kost']) {
+      assert.match(html, new RegExp(label))
+    }
+    assert.doesNotMatch(html, /undefined|null|NaN/)
+  } finally {
+    await cleanup()
+  }
+})
