@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Apple, Bot, Bug, Cloud, Dumbbell, HeartPulse, BatteryCharging } from 'lucide-react'
+import { Apple, Bot, Bug, Cloud, Dumbbell, HeartPulse, BatteryCharging, Info } from 'lucide-react'
 import AppPhase4 from './AppPhase4'
 import AppAICoach from './AppAICoach'
 import AtlasDevPanel from './AtlasDevPanel'
@@ -9,9 +9,10 @@ import ProductionPlatform from './platform/ProductionPlatform'
 import { getAtlasState, subscribeAtlas } from './core/atlasStore'
 import { recordCompletedWorkout } from './core/eventEngine'
 import { installPhase4Bridge } from './core/phase4Bridge'
+import { ASKR_BUILD, ASKR_TAGLINE, ASKR_VERSION, AskrLogo, SplashScreen } from './brand.jsx'
 import './appAtlas.css'
 
-const STORAGE_KEY = 'atlas-active-module-v1'
+const STORAGE_KEY = 'askr-active-module-v1'
 
 function loadModule() {
   try {
@@ -60,7 +61,9 @@ export default function AppAtlas() {
 
   return (
     <div className="atlas-product-shell">
-      <div className="atlas-module-switch" aria-label="Välj ATLAS-modul">
+      <SplashScreen />
+      <div className="atlas-module-switch" aria-label="Välj ASKR-modul">
+        <div className="askr-switch-brand"><AskrLogo size="sm"/><small>Performance OS</small></div>
         <button
           type="button"
           className={module === 'training' ? 'active' : ''}
@@ -109,7 +112,7 @@ export default function AppAtlas() {
           type="button"
           className={`atlas-dev-toggle ${showDevPanel ? 'active' : ''}`}
           onClick={() => setShowDevPanel(value => !value)}
-          title="Öppna intern ATLAS-diagnostik"
+          title="Öppna intern ASKR-diagnostik"
           aria-pressed={showDevPanel}
         >
           <Bug size={17}/>
@@ -122,7 +125,35 @@ export default function AppAtlas() {
       {module === 'recovery' && <RecoveryPlatform core={core} />}
       {module === 'intelligence' && <AppAICoach />}
       {module === 'production' && <ProductionPlatform />}
+      {module === 'production' && <BrandInformation />}
       {showDevPanel && <AtlasDevPanel core={core} onClose={() => setShowDevPanel(false)}/>} 
     </div>
+  )
+}
+
+
+function BrandInformation() {
+  return (
+    <section className="askr-about-panel" aria-labelledby="askr-about-title">
+      <div className="askr-about-hero">
+        <AskrLogo size="hero" />
+        <p>{ASKR_TAGLINE}</p>
+      </div>
+      <div className="askr-about-copy">
+        <span className="production-pill"><Info size={16}/> About ASKR</span>
+        <h2 id="askr-about-title">ASKR</h2>
+        <p>ASKR is a restrained performance application for training, recovery, nutrition and coach intelligence.</p>
+        <dl>
+          <div><dt>Version</dt><dd>{ASKR_VERSION}</dd></div>
+          <div><dt>Build</dt><dd>{ASKR_BUILD}</dd></div>
+          <div><dt>Brand</dt><dd>Strength, precision, technology, performance, discipline, recovery and evolution.</dd></div>
+          <div><dt>Privacy</dt><dd>Privacy policy placeholder.</dd></div>
+          <div><dt>Terms</dt><dd>Terms placeholder.</dd></div>
+          <div><dt>Credits</dt><dd>Open-source acknowledgements placeholder.</dd></div>
+          <div><dt>Website</dt><dd>Website placeholder.</dd></div>
+          <div><dt>Support</dt><dd>Support placeholder.</dd></div>
+        </dl>
+      </div>
+    </section>
   )
 }
