@@ -30,3 +30,18 @@ test('conflict detection compares local and remote timestamps', () => {
 test('email validation returns field-level validation errors', () => {
   assert.throws(() => errors.validateEmail('not-an-email'), error => error.kind === errors.ErrorKind.VALIDATION && Boolean(error.fieldErrors.email))
 })
+
+test('flush keeps queued changes when a sync service is unavailable', async () => {
+  memory.clear()
+  Object.defineProperty(globalThis, 'navigator', { value: { onLine: false }, configurable: true })
+  sync.enqueueOfflineChange('workout_sessions', 'upsert', { id: 'session-2' })
+  Object.defineProperty(globalThis, 'navigator', { value: { onLine: true }, configurable: true })
+  const status = await sync.flushOfflineQueue({})
+  assert.equal(status.state, 'pending')
+  assert.equal(sync.loadQueue().length, 1)
+  assert.equal(sync.loadQueue()[0].attempts, 1)
+})
+
+test('password validation returns field-level validation errors', () => {
+  assert.throws(() => errors.validatePassword('short'), error => error.kind === errors.ErrorKind.VALIDATION && Boolean(error.fieldErrors.password))
+})

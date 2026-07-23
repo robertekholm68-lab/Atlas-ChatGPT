@@ -8,7 +8,7 @@ export function loadQueue() {
 }
 
 export function saveQueue(queue) {
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(queue))
+  try { localStorage.setItem(QUEUE_KEY, JSON.stringify(queue)) } catch { /* Offline queue is best-effort when storage is unavailable. */ }
 }
 
 export function loadSyncStatus() {
@@ -17,7 +17,7 @@ export function loadSyncStatus() {
 
 export function saveSyncStatus(status) {
   const next = { lastSyncAt: null, state: 'idle', pending: loadQueue().length, ...loadSyncStatus(), ...status }
-  localStorage.setItem(SYNC_KEY, JSON.stringify(next))
+  try { localStorage.setItem(SYNC_KEY, JSON.stringify(next)) } catch { /* Sync status remains in-memory only. */ }
   window.dispatchEvent(new CustomEvent('atlas:sync-status', { detail: next }))
   return next
 }
@@ -43,7 +43,9 @@ export async function flushOfflineQueue(services) {
   const remaining = []
   for (const item of queue) {
     try {
-      await services[item.resource]?.applyQueuedChange?.(item)
+      const service = services[item.resource]
+      if (!service?.applyQueuedChange) throw new AtlasError(ErrorKind.SERVER, `Missing sync service for ${item.resource}`, { retryable: true })
+      await service.applyQueuedChange(item)
     } catch (error) {
       remaining.push({ ...item, attempts: item.attempts + 1, lastError: error.message })
     }

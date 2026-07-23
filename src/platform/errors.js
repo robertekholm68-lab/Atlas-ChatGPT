@@ -29,3 +29,9 @@ export function validateEmail(email) {
     throw new AtlasError(ErrorKind.VALIDATION, 'Invalid email', { fieldErrors: { email: 'Ange en giltig e-postadress.' } })
   }
 }
+
+export function validatePassword(password) {
+  if (String(password || '').length < 8) {
+    throw new AtlasError(ErrorKind.VALIDATION, 'Invalid password', { fieldErrors: { password: 'Använd minst 8 tecken.' } })
+  }
+}
