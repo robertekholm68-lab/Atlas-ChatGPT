@@ -120,7 +120,7 @@ export default function AppPhase4(){
     const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(data.programs)setPrograms(data.programs);if(data.history)setHistory(data.history);notify('Data importerad')}catch{notify('Filen kunde inte läsas')}};reader.readAsText(file)
   }
 
-  const nav=[['dashboard','Home',Activity],['session','Workout',Dumbbell],['recovery','Recovery',HeartPulse],['coach','AI Coach',Bot],['food','Food',Utensils],['progress','Progress',BarChart3]]
+  const nav=[['dashboard','Home',Activity],['programs','Program',Library],['session','Workout',Dumbbell],['recovery','Recovery',HeartPulse],['coach','AI Coach',Bot],['food','Food',Utensils],['progress','Progress',BarChart3]]
   const bottomNavItems = nav.map(([id, label, icon]) => ({ id, label, icon }))
   return <div className="p4-shell">
     <aside className="p4-sidebar"><div className="p4-brand"><span>A</span><div><strong>ATLAS</strong><small>INTELLIGENT TRAINING</small></div></div><nav>{nav.map(([id,label,Icon])=><button key={id} className={page===id?'active':''} onClick={()=> id==='session' && !session ? setPage('programs') : setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav><div className="p4-side-tools"><button onClick={exportData}><Download size={17}/>Exportera</button><button onClick={()=>fileInput.current?.click()}><Upload size={17}/>Importera</button><input ref={fileInput} type="file" accept="application/json" hidden onChange={importData}/></div></aside>
@@ -153,22 +153,34 @@ function AtlasAsset({ src, alt, ratio='16 / 10', fit='cover', fallback='Asset re
   return <div className={`atlas-asset ${failed?'missing':''}`} style={{'--asset-ratio':ratio}}>{!failed&&<img src={src} alt={alt} loading="lazy" style={{objectFit:fit}} onError={()=>setFailed(true)}/>} {failed&&<span>{fallback}</span>}</div>
 }
 
+
+function programExercises(program){return (program?.exercises||[]).map(id=>exerciseBank.find(exercise=>exercise.id===id)).filter(Boolean)}
+function programMeta(program,history=[]){
+  const exercises=programExercises(program);const sets=exercises.reduce((sum,e)=>sum+Number((e.sets.match(/\d+/)||[3])[0]),0)
+  const muscles=[...new Set(exercises.flatMap(e=>[e.muscle,...(e.secondary||'').split(' · ').filter(x=>x&&x!=='—')]))].slice(0,5)
+  const equipment=[...new Set(exercises.map(e=>e.equipment))].join(' · ')||'Blandad'
+  const level=program?.name?.includes('50+')?'Åldersanpassad':exercises.some(e=>e.level==='Avancerad')?'Avancerad':exercises.some(e=>e.level==='Medel')?'Medel':'Nybörjare'
+  const goal=program?.type==='PPL'?'Hypertrofi och volym':program?.type==='Helkropp'?'Generell styrka och rörlighet':program?.type==='Upper/Lower'?'Styrka och muskeltillväxt':'Eget mål'
+  const duration=program?.type==='PPL'?8:program?.type==='Helkropp'?6:10
+  const sessionLength=Math.max(35,Math.min(75,Math.round(sets*3.4)))
+  const completed=history.filter(h=>h.name===program?.name).length
+  return {exercises,sets,muscles,equipment,level,goal,duration,sessionLength,completed,phase:completed>duration*(program?.days||0)*.75?'Peak':completed>duration*(program?.days||0)*.35?'Build':'Base'}
+}
+
 function Dashboard({programs,history,startProgram,setPage}){
-  const week=history.slice(0,4);const volume=week.reduce((sum,item)=>sum+item.volume,0);const sets=week.reduce((sum,item)=>sum+item.sets,0)
-  const recommended=programs.find(program=>program.id==='upper-a')||programs[0]
-  const savedPrograms=programs.filter(program=>!program.archived).slice(0,3)
-  const recent=history.slice(0,3)
-  const nextExercises=(recommended?.exercises||[]).map(id=>exerciseBank.find(exercise=>exercise.id===id)).filter(Boolean)
-  const muscleFocus=[...new Set(nextExercises.map(exercise=>exercise.muscle))].slice(0,4).join(' · ')
-  return <div className="p4-grid workout-command-center"><section className="p4-hero span8 workout-home-hero"><div><span className="pill"><Sparkles size={15}/>Dagens rekommendation</span><h2>{recommended?.name||'Välj workout'}</h2><p>{workoutIntelligence.notes} Fokus: {muscleFocus || 'helkropp'}.</p><div className="overview-meta"><span><Clock size={14}/>55 min</span><span><Dumbbell size={14}/>{nextExercises.length} övningar</span><span><Target size={14}/>{sets} set denna vecka</span></div><div className="hero-actions"><button className="p4-primary" onClick={()=>startProgram(recommended)}><Play size={18}/>Starta dagens pass</button><button className="p4-secondary" onClick={()=>setPage('programs')}>Förbered / redigera</button></div></div><div className="hero-asset-stack"><AtlasAsset src={recommended?.cover || atlasAssets.programCovers.upperA} alt={`${recommended?.name || 'Dagens workout'} program cover`} ratio="4 / 3" fallback={assetFallbackLabels.program}/><div className="readiness"><strong>84</strong><span>Redo</span></div></div></section>
-    <section className="panel span4 resumable-card"><SectionTitle eyebrow="Status" title="Redo att starta"/><p>Inget aktivt pass väntar. Din viktigaste åtgärd är att starta dagens workout.</p><button className="p4-primary full" onClick={()=>startProgram(recommended)}><Play size={17}/>Starta nu</button></section>
-    <Kpi icon={Dumbbell} label="Pass denna vecka" value={week.length}/><Kpi icon={Flame} label="Total volym" value={`${Math.round(volume/1000)} ton`}/><Kpi icon={Target} label="Arbetsset" value={sets}/><Kpi icon={Trophy} label="Nya PB" value="4"/>
-    <section className="panel span7"><SectionTitle eyebrow="Dagens plan" title="Workout preparation"/><div className="prep-list">{nextExercises.map((exercise,index)=><div key={exercise.id}><b>{index+1}</b><span><strong>{exercise.name}</strong><small>{exercise.sets} · {exercise.muscle} · vila 90 sek · förra: {previousPerformance(exercise.id)}</small></span></div>)}</div></section>
-    <section className="panel span5"><SectionTitle eyebrow="Snabbstart" title="Quick start"/><div className="quick-start-grid">{savedPrograms.slice(0,3).map(program=><button key={program.id} onClick={()=>startProgram(program)}><Dumbbell size={18}/><span><strong>{program.name}</strong><small>{program.exercises.length} övningar · {program.type}</small></span></button>)}<button onClick={()=>setPage('exercises')}><Search size={18}/><span><strong>Övningsbank</strong><small>Sök eller välj övning</small></span></button></div></section>
-    <section className="panel span7"><SectionTitle eyebrow="Senaste aktivitet" title="Recent workouts"/><div className="recent-workouts">{recent.length?recent.map(item=><div key={item.id}><History size={18}/><span><strong>{item.name}</strong><small>{item.date} · {item.sets} set · {item.duration} min</small></span><b>{item.volume.toLocaleString('sv-SE')} kg</b></div>):<div className="empty-workout-state"><AlertCircle size={18}/>Inga sparade workouts ännu.</div>}</div></section>
-    <section className="panel span5"><SectionTitle eyebrow="Muscle load" title="Veckovolym"/><MuscleVolume compact/></section>
+  const active=programs.find(program=>program.id==='upper-a')||programs[0];const meta=programMeta(active,history)
+  const week=history.slice(0,4);const completedThisWeek=week.length;const totalSessions=meta.duration*(active?.days||0);const adherence=Math.min(100,Math.round(completedThisWeek/Math.max(1,active?.days||1)*100))
+  return <div className="program-dashboard"><section className="p4-hero span8 program-hero"><div><span className="pill"><Sparkles size={15}/>Aktivt program</span><h2>{active?.name||'Inget aktivt program'}</h2><p>{active?`${meta.goal}. Vecka 3 av ${meta.duration} · fas ${meta.phase}. Nästa steg är tydligt: starta rekommenderat pass när du är redo.`:'Välj ett program i biblioteket för att få en tydlig plan.'}</p><div className="overview-meta"><span><CalendarDays size={14}/>Vecka 3 / {meta.duration}</span><span><Dumbbell size={14}/>{active?.days||0} dagar/vecka</span><span><Clock size={14}/>{meta.sessionLength} min/pass</span><span><Target size={14}/>{meta.muscles.slice(0,3).join(' · ')}</span></div><div className="hero-actions"><button className="p4-primary" onClick={()=>startProgram(active)}><Play size={18}/>Starta nästa workout</button><button className="p4-secondary" onClick={()=>setPage('programs')}>Visa programdetaljer</button></div></div><div className="program-orbit"><strong>{adherence}%</strong><span>adherence</span></div></section>
+    <section className="panel span4 next-action-panel"><SectionTitle eyebrow="Nästa action" title="Redo att starta"/><p>{workoutIntelligence.notes}</p><button className="p4-primary full" onClick={()=>startProgram(active)}><Play size={17}/>Starta nu</button><button className="p4-secondary full" onClick={()=>setPage('programs')}>Byt eller redigera</button></section>
+    <Kpi icon={CalendarDays} label="Planerade pass" value={totalSessions}/><Kpi icon={Check} label="Genomförda" value={meta.completed}/><Kpi icon={Target} label="Arbetsset" value={meta.sets}/><Kpi icon={Trophy} label="Fas" value={meta.phase}/>
+    <section className="panel span7"><SectionTitle eyebrow="Weekly schedule" title="Den här veckan"/><div className="program-week-grid">{Array.from({length:active?.days||0},(_,i)=>{const done=i<completedThisWeek;const ex=meta.exercises[i%Math.max(1,meta.exercises.length)];return <article key={i} className={done?'done':i===completedThisWeek?'today':''}><b>{done?<Check size={16}/>:i+1}</b><span><strong>{i%2?'Underkropp / Pull':'Överkropp / Push'}</strong><small>{done?'Genomfört':i===completedThisWeek?'Nästa rekommenderade pass':'Kommande'} · {ex?.name}</small></span></article>})}</div></section>
+    <section className="panel span5"><ProgramProgress program={active} meta={meta}/></section>
+    <section className="panel span7"><SectionTitle eyebrow="Senaste aktivitet" title="Recent workouts"/><div className="recent-workouts">{history.slice(0,4).map(item=><div key={item.id}><History size={18}/><span><strong>{item.name}</strong><small>{item.date} · {item.sets} set · {item.duration} min</small></span><b>{item.volume.toLocaleString('sv-SE')} kg</b></div>)}</div></section>
+    <section className="panel span5"><SectionTitle eyebrow="Quick actions" title="Hantera program"/><div className="quick-start-grid"><button onClick={()=>setPage('programs')}><Library size={18}/><span><strong>Bläddra bibliotek</strong><small>Sök, filtrera och jämför program</small></span></button><button onClick={()=>setPage('programs')}><Pencil size={18}/><span><strong>Redigera aktivt</strong><small>Ändra namn, dagar och övningsordning</small></span></button></div></section>
   </div>
 }
+
+function ProgramProgress({program,meta}){return <div className="program-progress"><SectionTitle eyebrow="Programdata" title="Progression"/><div className="program-facts"><div><span>Duration</span><strong>{meta.duration} veckor</strong></div><div><span>Frequency</span><strong>{program?.days} dagar/vecka</strong></div><div><span>Level</span><strong>{meta.level}</strong></div><div><span>Equipment</span><strong>{meta.equipment}</strong></div></div><p>Fokus: {meta.muscles.join(' · ')}. Återhämtning: 24–48 timmar mellan liknande muskelgrupper.</p></div>}
 
 function ProgramLibrary({programs,setPrograms,activeProgramId,setActiveProgramId,startProgram,notify}){
   const [filter,setFilter]=useState('alla');const active=programs.find(p=>p.id===activeProgramId)||programs[0]
