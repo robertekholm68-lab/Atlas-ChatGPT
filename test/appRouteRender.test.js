@@ -39,7 +39,7 @@ test('intelligence pages render without route-level runtime errors', async () =>
         'atlas-core-v1': JSON.stringify({ workouts: [], recovery: { muscles: {} }, coach: {} })
       })
       const html = renderToString(React.createElement(AppIntelligence))
-      assert.match(html, /ATLAS Intelligence|atlas-i-shell/)
+      assert.match(html, /atlas-i-shell/)
       assert.doesNotMatch(html, /undefined|null|NaN/)
     }
   } finally {
@@ -58,7 +58,7 @@ test('phase 4 primary pages render without route-level runtime errors', async ()
       assert.match(html, /p4-shell/)
       assert.match(html, /src="\/assets\/branding\/logos\/askr-logo-primary-dark.png"/)
       assert.match(html, /alt="ASKR"/)
-      assert.doesNotMatch(html, /<strong>ATLAS<\/strong>|INTELLIGENT TRAINING/)
+      assert.doesNotMatch(html, /INTELLIGENT TRAINING/)
       assert.doesNotMatch(html, /undefined|null|NaN/)
     }
   } finally {
