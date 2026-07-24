@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { brandLogoUrl } from './assets'
 import {
   Activity, AlertTriangle, ArrowRight, Bot, Brain, CalendarDays,
   Check, ChevronRight, ClipboardList, Gauge, Goal, HeartPulse,
@@ -121,7 +122,7 @@ export default function AppIntelligence() {
 
   return <div className="atlas-i-shell">
     <aside className="atlas-i-sidebar">
-      <div className="atlas-i-brand"><img src="/assets/branding/logos/askr-wordmark-horizontal.png" alt="ASKR"/></div>
+      <div className="atlas-i-brand"><img src={brandLogoUrl} alt="ASKR"/></div>
       <nav>{nav.map(([id, label, Icon]) => <button key={id} className={page === id ? 'active' : ''} onClick={() => setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav>
       <div className="atlas-i-user"><span>RE</span><div><strong>{profile.name}</strong><small>{COACH_MODES[profile.mode].label} coach</small></div></div>
     </aside>

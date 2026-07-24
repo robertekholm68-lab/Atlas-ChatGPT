@@ -4,6 +4,7 @@ import { getAtlasState } from './core/atlasStore'
 import { buildCoachPlatformViewModel, coachPersonalities, goalTypes } from './core/aiCoachPlatform'
 import './aiCoachPlatform.css'
 
+import { brandLogoUrl } from './assets'
 const tabs = ['Dashboard', 'Daily Brief', 'Chat', 'Timeline', 'Recommendations', 'Weekly Review', 'Monthly Review']
 
 export default function AppAICoach() {
@@ -12,7 +13,7 @@ export default function AppAICoach() {
   const vm = useMemo(() => buildCoachPlatformViewModel(getAtlasState(), { name: 'Robert' }), [])
   return <div className="ai-coach-shell">
     <aside className="ai-coach-rail" aria-label="AI Coach navigation">
-      <div className="ai-brand"><img src="/assets/branding/logos/askr-wordmark-horizontal.png" alt="ASKR"/></div>
+      <div className="ai-brand"><img src={brandLogoUrl} alt="ASKR"/></div>
       <nav>{tabs.map(item => <button key={item} className={tab === item ? 'active' : ''} onClick={() => setTab(item)}>{item}</button>)}</nav>
       <div className="ai-personality"><span>Personality architecture</span>{Object.values(coachPersonalities).map(p => <b key={p.id}>{p.label}</b>)}</div>
     </aside>

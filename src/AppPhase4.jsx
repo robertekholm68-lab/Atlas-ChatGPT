@@ -1,4 +1,5 @@
 import './phase4.css'
+import { brandLogoUrl, publicAsset } from './assets'
 import { ActionButton, BottomNavigation, Card, ExerciseRow, ProgressRing, SectionTitle as AtlasSectionTitle, StatCard, WorkoutCard } from './atlasDesignSystem'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -25,8 +26,8 @@ const exerciseBank = [
 ]
 
 const defaultPrograms = [
-  {id:'upper-a',name:'Överkropp A',type:'Upper/Lower',days:4,favorite:true,archived:false,cover:'/assets/program-covers/upper-a.svg',muscleFigure:'/assets/muscle-figures/back.svg',muscleFigureAlt:'Bakre muskelkarta med rygg, axlar och armar markerade',exercises:['bench','row','ohp','pulldown','pushdown','curl']},
-  {id:'lower-a',name:'Underkropp A',type:'Upper/Lower',days:4,favorite:true,archived:false,cover:'/assets/program-covers/lower-a.svg',muscleFigure:'/assets/muscle-figures/front.svg',muscleFigureAlt:'Främre muskelkarta med lår och bål markerade',exercises:['squat','rdl','legpress','calf','plank']},
+  {id:'upper-a',name:'Överkropp A',type:'Upper/Lower',days:4,favorite:true,archived:false,cover:publicAsset('assets/program-covers/upper-a.svg'),muscleFigure:publicAsset('assets/muscle-figures/back.svg'),muscleFigureAlt:'Bakre muskelkarta med rygg, axlar och armar markerade',exercises:['bench','row','ohp','pulldown','pushdown','curl']},
+  {id:'lower-a',name:'Underkropp A',type:'Upper/Lower',days:4,favorite:true,archived:false,cover:publicAsset('assets/program-covers/lower-a.svg'),muscleFigure:publicAsset('assets/muscle-figures/front.svg'),muscleFigureAlt:'Främre muskelkarta med lår och bål markerade',exercises:['squat','rdl','legpress','calf','plank']},
   {id:'fullbody',name:'Helkropp 50+',type:'Helkropp',days:2,favorite:false,archived:false,exercises:['legpress','bench','row','rdl','ohp','plank']},
   {id:'push',name:'Push',type:'PPL',days:6,favorite:false,archived:false,exercises:['bench','ohp','pushdown']},
   {id:'pull',name:'Pull',type:'PPL',days:6,favorite:false,archived:false,exercises:['pulldown','row','curl','rdl']},
@@ -50,8 +51,8 @@ const assetFallbackLabels = {
 }
 
 const atlasAssets = {
-  programCovers: { upperA: '/assets/program-covers/upper-a.svg' },
-  muscleFigures: { front: '/assets/muscle-figures/front.svg', back: '/assets/muscle-figures/back.svg' },
+  programCovers: { upperA: publicAsset('assets/program-covers/upper-a.svg') },
+  muscleFigures: { front: publicAsset('assets/muscle-figures/front.svg'), back: publicAsset('assets/muscle-figures/back.svg') },
   exercises: {},
   coach: {},
   food: {},
@@ -123,7 +124,7 @@ export default function AppPhase4(){
   const nav=[['dashboard','Home',Activity],['programs','Program',Library],['session','Workout',Dumbbell],['recovery','Recovery',HeartPulse],['coach','AI Coach',Bot],['food','Food',Utensils],['progress','Progress',BarChart3]]
   const bottomNavItems = nav.map(([id, label, icon]) => ({ id, label, icon }))
   return <div className="p4-shell">
-    <aside className="p4-sidebar"><div className="p4-brand"><img src="/assets/branding/logos/askr-wordmark-horizontal.png" alt="ASKR"/></div><nav>{nav.map(([id,label,Icon])=><button key={id} className={page===id?'active':''} onClick={()=> id==='session' && !session ? setPage('programs') : setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav><div className="p4-side-tools"><button onClick={exportData}><Download size={17}/>Exportera</button><button onClick={()=>fileInput.current?.click()}><Upload size={17}/>Importera</button><input ref={fileInput} type="file" accept="application/json" hidden onChange={importData}/></div></aside>
+    <aside className="p4-sidebar"><div className="p4-brand"><img src={brandLogoUrl} alt="ASKR"/></div><nav>{nav.map(([id,label,Icon])=><button key={id} className={page===id?'active':''} onClick={()=> id==='session' && !session ? setPage('programs') : setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav><div className="p4-side-tools"><button onClick={exportData}><Download size={17}/>Exportera</button><button onClick={()=>fileInput.current?.click()}><Upload size={17}/>Importera</button><input ref={fileInput} type="file" accept="application/json" hidden onChange={importData}/></div></aside>
     <main className="p4-main"><header className="p4-top"><div><span className="eyebrow">Fas 4</span><h1>{titleFor(page)}</h1><p>{subtitleFor(page)}</p></div><div><button className="p4-icon" onClick={()=>setModal('share')}><Share2 size={19}/></button><button className="p4-primary" onClick={()=>setModal('new-program')}><Plus size={18}/>Nytt program</button></div></header>
       {page==='dashboard'&&<Dashboard programs={programs} history={history} startProgram={startProgram} setPage={setPage}/>}
       {page==='programs'&&<ProgramLibrary programs={programs} setPrograms={setPrograms} activeProgramId={activeProgramId} setActiveProgramId={setActiveProgramId} startProgram={startProgram} notify={notify}/>}

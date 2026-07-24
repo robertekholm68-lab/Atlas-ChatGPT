@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { brandLogoUrl } from './assets'
 import {
   Activity, Apple, ArrowRight, BarChart3, Bell, Bot, Check, ChevronDown,
   ChevronRight, CirclePause, CirclePlay, Dumbbell, Flame, Home, Minus,
@@ -194,7 +195,7 @@ function BodyPage(){return <div className="body-dashboard"><section className="p
 function NutritionPage({notify}){return <div className="dashboard-grid"><section className="hero-card nutrition-hero span-8"><div><span className="status-pill"><Apple size={15}/> Dagens energi</span><h2>1 420 av 2 050 kcal</h2><p>Prioritera protein och grönsaker i nästa måltid.</p><button className="primary-button" onClick={()=>notify('Måltidslogg öppnad')}><Plus size={18}/> Logga måltid</button></div><div className="macro-donut"><span>69%</span></div></section><MetricCard className="span-4" icon={Flame} label="Kvar idag" value="630 kcal" note="Flexibelt utrymme"/></div>}
 function CoachPage({notify}){return <div className="coach-layout"><section className="coach-intro"><div className="coach-orb"><Bot size={42}/></div><span className="status-pill"><Sparkles size={15}/> Personlig analys</span><h2>Vad vill du ha hjälp med?</h2><p>ATLAS väger samman träningslogg, återhämtning, mål och upplevd ansträngning.</p></section><div className="prompt-grid">{['Hur bör jag träna idag?','Analysera mitt senaste pass','Justera progressionen'].map(prompt=><button key={prompt} onClick={()=>notify('Frågan skickades')}><Sparkles size={18}/><span>{prompt}</span><ArrowRight size={18}/></button>)}</div></div>}
 
-function Brand(){return <div className="brand"><img className="brand-logo" src="/assets/branding/logos/askr-wordmark-horizontal.png" alt="ASKR"/></div>}
+function Brand(){return <div className="brand"><img className="brand-logo" src={brandLogoUrl} alt="ASKR"/></div>}
 function NavButton({item,active,onClick,compact=false}){const Icon=item.icon;return <button className={`nav-button ${active?'active':''} ${compact?'compact':''}`} onClick={onClick}><Icon size={20}/><span>{item.label}</span></button>}
 function SectionHeading({eyebrow,title}){return <div className="section-heading"><div><span>{eyebrow}</span><h3>{title}</h3></div></div>}
 function MetricCard({icon:Icon,label,value,note,className=''}){return <article className={`metric-card ${className}`}><div className="metric-icon"><Icon size={20}/></div><span>{label}</span><strong>{value}</strong><small>{note}</small></article>}

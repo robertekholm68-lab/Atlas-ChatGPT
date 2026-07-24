@@ -3,6 +3,7 @@ import './phase2.css'
 import './workout-polish.css'
 import WorkoutPlatform from './WorkoutPlatform.jsx'
 import { useMemo, useState } from 'react'
+import { brandLogoUrl } from './assets'
 import {
   Activity, Apple, ArrowRight, BarChart3, BatteryCharging, Bell, Bot,
   ChevronRight, Dumbbell, Flame, HeartPulse, Home, Info, Moon, Plus,
@@ -74,7 +75,7 @@ function PageContent({ activePage, navigate, notify, selectedMuscle, setSelected
   return <div key="coach" className={pageClass}><CoachPage notify={notify}/></div>
 }
 
-function Brand(){return <div className="brand"><img className="brand-logo" src="/assets/branding/logos/askr-wordmark-horizontal.png" alt="ASKR"/></div>}
+function Brand(){return <div className="brand"><img className="brand-logo" src={brandLogoUrl} alt="ASKR"/></div>}
 function NavButton({item,active,onClick,compact=false}){const Icon=item.icon;return <button className={`nav-button ${active?'active':''} ${compact?'compact':''}`} onClick={onClick}><Icon size={20}/><span>{item.label}</span></button>}
 function TodayPage({navigate,notify}){return <div className="dashboard-grid"><section className="hero-card span-8"><div className="hero-copy"><span className="status-pill"><Sparkles size={15}/> Dagens rekommendation</span><h2>Överkropp · styrka</h2><p>Din återhämtning är stabil. Kör planerat pass, men håll två repetitioner i reserv på de tyngsta seten.</p><div className="hero-actions"><button className="primary-button" onClick={()=>navigate('train')}><Dumbbell size={18}/> Starta pass</button><button className="text-button" onClick={()=>notify('Dagens plan är sparad')}>Visa upplägg <ArrowRight size={17}/></button></div></div><div className="readiness-ring"><span>82</span><small>Redo</small></div></section><MetricCard className="span-4" icon={BatteryCharging} label="Återhämtning" value="82%" note="+6 mot i går" tone="positive"/><MetricCard className="span-4" icon={Moon} label="Sömn" value="7 h 24 m" note="Bra kontinuitet"/><MetricCard className="span-4" icon={HeartPulse} label="Vilopuls" value="52 bpm" note="Under din baslinje" tone="positive"/><MetricCard className="span-4" icon={Flame} label="Veckobelastning" value="68%" note="Inom optimal zon"/><section className="panel span-7"><SectionHeading eyebrow="Senaste 7 dagarna" title="Träningsrytm" action="Visa historik"/><div className="activity-chart">{[42,74,28,88,54,92,64].map((h,i)=><div key={i} className="chart-day"><div style={{height:`${h}%`}}/><span>{['M','T','O','T','F','L','S'][i]}</span></div>)}</div></section><section className="panel span-5"><SectionHeading eyebrow="Mål" title="Thailand-resan" action="Detaljer"/><div className="goal-progress"><div><strong>74%</strong><span>Mot delmålet</span></div><div className="progress-track"><span style={{width:'74%'}}/></div></div><ul className="clean-list"><li><Target size={17}/>2 styrkepass kvar denna vecka</li><li><TrendingUp size={17}/>VO₂ max utvecklas positivt</li></ul></section></div>}
 function TrainingPage({notify}){return <WorkoutPlatform notify={notify}/>}

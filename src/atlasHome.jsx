@@ -2,6 +2,7 @@ import { Activity, ArrowRight, Bot, Dumbbell, HeartPulse, Home, Moon, Target, Tr
 
 import { atlasHomeTokens, buildHomeViewModel, safeHomeTarget } from './atlasHomeModel.js'
 
+import { brandLogoUrl } from './assets'
 export { atlasHomeTokens, buildHomeViewModel }
 
 export function AtlasCard({ className = '', children }) { return <section className={`atlas-card ${className}`}>{children}</section> }
@@ -25,7 +26,7 @@ export function AtlasHomeScreen({ profile, core, recommendation, readiness, setP
   const recoveryMetric = vm.metrics.find(metric => metric.id === 'recovery')
 
   return <div className="atlas-home-page">
-    <header className="atlas-home-header"><div className="atlas-home-brand"><img src="/assets/branding/logos/askr-wordmark-horizontal.png" alt="ASKR"/></div><div className="atlas-header-status"><span>{vm.greeting}</span><button type="button" className="atlas-avatar-button" aria-label="Öppna profil"><UserRound size={19}/></button></div></header>
+    <header className="atlas-home-header"><div className="atlas-home-brand"><img src={brandLogoUrl} alt="ASKR"/></div><div className="atlas-header-status"><span>{vm.greeting}</span><button type="button" className="atlas-avatar-button" aria-label="Öppna profil"><UserRound size={19}/></button></div></header>
 
     <section className={`atlas-home-hero ${vm.insufficient ? 'insufficient' : ''}`}>
       <div className="atlas-hero-copy"><span className="atlas-kicker">Dagens beslut</span><h1>{vm.headline}</h1><p>{vm.explanation}</p><div className="atlas-confidence"><TrendingUp size={16}/>{vm.confidence}</div><div className="atlas-actions"><AtlasPrimaryButton onClick={() => go(vm.primaryTarget)}><Zap size={18}/>{vm.primaryLabel}</AtlasPrimaryButton>{vm.secondary && <AtlasSecondaryButton onClick={() => go(vm.secondary.target)}>{vm.secondary.label}<ArrowRight size={17}/></AtlasSecondaryButton>}</div></div>
