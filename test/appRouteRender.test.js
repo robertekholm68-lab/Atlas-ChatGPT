@@ -55,7 +55,10 @@ test('phase 4 primary pages render without route-level runtime errors', async ()
     for (const page of ['dashboard', 'session', 'food', 'progress', 'recovery', 'coach']) {
       globalThis.localStorage = storageWith({ 'atlas-phase4': JSON.stringify({ page }) })
       const html = renderToString(React.createElement(AppPhase4))
-      assert.match(html, /ATLAS|p4-shell/)
+      assert.match(html, /p4-shell/)
+      assert.match(html, /src="\/assets\/branding\/logos\/askr-wordmark-horizontal.png"/)
+      assert.match(html, /alt="ASKR"/)
+      assert.doesNotMatch(html, /<strong>ATLAS<\/strong>|INTELLIGENT TRAINING/)
       assert.doesNotMatch(html, /undefined|null|NaN/)
     }
   } finally {
