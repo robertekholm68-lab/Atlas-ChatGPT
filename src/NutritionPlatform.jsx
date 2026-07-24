@@ -85,7 +85,7 @@ export default function NutritionPlatform({ notify = () => {} }) {
     </section>
 
     <section className="nutrition-panel span6">
-      <Section eyebrow="Workout + AI Coach" title="Träningsdagens kost" />
+      <Section eyebrow="Workout + ASKR Coach" title="Träningsdagens kost" />
       <div className="coach-prep-grid">{['Calories burned placeholder', 'Recommended protein', 'Pre-workout suggestions', 'Post-workout suggestions', 'Hydration reminder', 'Calorie adjustment'].map(item => <div key={item}><Sparkles size={17}/><span>{item}</span><small>Arkitektur redo · ingen extern API/AI ännu</small></div>)}</div>
     </section>
 

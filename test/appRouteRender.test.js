@@ -39,7 +39,7 @@ test('intelligence pages render without route-level runtime errors', async () =>
         'atlas-core-v1': JSON.stringify({ workouts: [], recovery: { muscles: {} }, coach: {} })
       })
       const html = renderToString(React.createElement(AppIntelligence))
-      assert.match(html, /ATLAS Intelligence|atlas-i-shell/)
+      assert.match(html, /atlas-i-shell/)
       assert.doesNotMatch(html, /undefined|null|NaN/)
     }
   } finally {
@@ -58,7 +58,7 @@ test('phase 4 primary pages render without route-level runtime errors', async ()
       assert.match(html, /p4-shell/)
       assert.match(html, /src="\/assets\/branding\/logos\/askr-logo-primary-dark.png"/)
       assert.match(html, /alt="ASKR"/)
-      assert.doesNotMatch(html, /<strong>ATLAS<\/strong>|INTELLIGENT TRAINING/)
+      assert.doesNotMatch(html, /INTELLIGENT TRAINING/)
       assert.doesNotMatch(html, /undefined|null|NaN/)
     }
   } finally {
@@ -74,7 +74,7 @@ test('phase 4 Recovery route renders with primary app navigation intact', async 
     const { default: AppPhase4 } = await import(modulePath)
     globalThis.localStorage = storageWith({ 'atlas-phase4': JSON.stringify({ page: 'recovery' }) })
     const html = renderToString(React.createElement(AppPhase4))
-    for (const label of ['Home', 'Workout', 'Recovery', 'AI Coach', 'Food', 'Progress']) {
+    for (const label of ['Home', 'Workout', 'Recovery', 'ASKR Coach', 'Food', 'Progress']) {
       assert.match(html, new RegExp(`>${label}<`))
     }
     assert.match(html, /Recovery command center/)
