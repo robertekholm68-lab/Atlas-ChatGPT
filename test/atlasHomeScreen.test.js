@@ -46,6 +46,15 @@ test('valid primary action navigation is preserved', () => {
   assert.equal(vm.primaryTarget, 'recovery')
 })
 
+
+
+test('default core recovery score is not shown as real dashboard data', () => {
+  const vm = buildHomeViewModel({ profile: { name: 'Ava Atlas', checkIn: {} }, core: { recovery: { muscles: {}, score: 100, updatedAt: null }, workouts: [] }, recommendation: { insufficientData: true, context: {}, dataQuality: { label: 'otillräcklig', signals: 0, possibleSignals: 6 } } })
+  assert.equal(vm.hasRecoveryData, false)
+  assert.equal(vm.recoveryScore, null)
+  assert.equal(vm.metrics.some(metric => metric.id === 'recovery'), false)
+})
+
 test('bottom-navigation active state target helper accepts only valid pages', () => {
   assert.equal(safeHomeTarget('today'), 'today')
   assert.equal(safeHomeTarget('missing', 'today'), 'today')
