@@ -8,7 +8,7 @@ const tabs = ['Dashboard', 'Daily Brief', 'Chat', 'Timeline', 'Recommendations',
 
 export default function AppAICoach() {
   const [tab, setTab] = useState('Dashboard')
-  const [messages, setMessages] = useState([{ role: 'coach', text: 'I am ready to coach from your structured ATLAS context. Connect an LLM provider when the backend contract is approved.' }])
+  const [messages, setMessages] = useState([{ role: 'coach', text: 'I am ready to coach from your structured ASKR context. Connect an LLM provider when the backend contract is approved.' }])
   const vm = useMemo(() => buildCoachPlatformViewModel(getAtlasState(), { name: 'Robert' }), [])
   return <div className="ai-coach-shell">
     <aside className="ai-coach-rail" aria-label="ASKR Coach navigation">
