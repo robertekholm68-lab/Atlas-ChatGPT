@@ -4,6 +4,7 @@ Replace these intentional placeholders with final branded production assets with
 
 Recommended structure:
 
+- `branding/` — ASKR logo, symbol, watermark, and wordmark assets.
 - `program-covers/` — program or workout cover imagery.
 - `exercises/` — exercise demonstration images.
 - `muscle-figures/` — front/back body figures used by cards and recovery views.
