@@ -1,16 +1,18 @@
 import { AlertCircle, CheckCircle2, ChevronRight, Loader2, Sparkles } from 'lucide-react'
+import { sharedComponentStyles } from './theme/componentStyles'
 
-export function Card({ children, className = '', as: Tag = 'section', elevated = false }) {
-  return <Tag className={`atlas-card motion-scale-in ${elevated ? 'is-elevated' : ''} ${className}`.trim()}>{children}</Tag>
+export function Card({ children, className = '', as: Tag = 'section', elevated = false, style, ...props }) {
+  return <Tag className={`atlas-card motion-scale-in ${elevated ? 'is-elevated' : ''} ${className}`.trim()} style={{ ...sharedComponentStyles.card, ...style }} {...props}>{children}</Tag>
 }
 
 export function SectionTitle({ eyebrow, title, action, onAction }) {
   return <div className="atlas-section-title"><div>{eyebrow && <span>{eyebrow}</span>}<h3>{title}</h3></div>{action && <button type="button" className="atlas-link-button" onClick={onAction}>{action}<ChevronRight size={16}/></button>}</div>
 }
 
-export function ActionButton({ children, variant = 'primary', state = 'idle', className = '', ...props }) {
+export function ActionButton({ children, variant = 'primary', state = 'idle', className = '', style, ...props }) {
   const Icon = state === 'loading' ? Loader2 : state === 'success' ? CheckCircle2 : state === 'error' ? AlertCircle : null
-  return <button type="button" aria-busy={state === 'loading'} disabled={props.disabled || state === 'loading'} className={`atlas-button ${variant} is-${state} ${className}`.trim()} {...props}>{Icon && <Icon size={17} className={state === 'loading' ? 'spin' : ''}/>}<span>{children}</span></button>
+  const buttonStyle = sharedComponentStyles.button[variant] || sharedComponentStyles.button.primary
+  return <button type="button" aria-busy={state === 'loading'} disabled={props.disabled || state === 'loading'} className={`atlas-button ${variant} is-${state} ${className}`.trim()} style={{ ...buttonStyle, ...style }} {...props}>{Icon && <Icon size={17} className={state === 'loading' ? 'spin' : ''}/>}<span>{children}</span></button>
 }
 
 export function StatCard({ icon: Icon, label, value, note, tone = '' }) {
@@ -18,7 +20,7 @@ export function StatCard({ icon: Icon, label, value, note, tone = '' }) {
 }
 
 export function ProgressRing({ value, label, size = 132 }) {
-  return <div className="atlas-progress-ring motion-scale-in" style={{ '--value': `${value * 3.6}deg`, width: size, height: size }} role="img" aria-label={`${label}: ${value} procent`}><strong>{value}</strong><span>{label}</span></div>
+  return <div className="atlas-progress-ring motion-scale-in" style={{ '--value': `${value * 3.6}deg`, '--askr-progress': sharedComponentStyles.progressRing.foreground, '--askr-progress-track': sharedComponentStyles.progressRing.backgroundTrack, '--askr-progress-inner': sharedComponentStyles.progressRing.inner, width: size, height: size }} role="img" aria-label={`${label}: ${value} procent`}><strong>{value}</strong><span>{label}</span></div>
 }
 
 export function WorkoutCard({ title, meta, tag, onStart }) {

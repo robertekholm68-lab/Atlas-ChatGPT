@@ -1,13 +1,14 @@
 import { Activity, ArrowRight, Bot, Dumbbell, HeartPulse, Home, Moon, Target, TrendingUp, UserRound, Zap } from 'lucide-react'
 
 import { atlasHomeTokens, buildHomeViewModel, safeHomeTarget } from './atlasHomeModel.js'
+import { sharedComponentStyles } from './theme/componentStyles'
 
 export { atlasHomeTokens, buildHomeViewModel }
 
-export function AtlasCard({ className = '', children }) { return <section className={`atlas-card ${className}`}>{children}</section> }
-export function AtlasPrimaryButton({ children, onClick, ariaLabel }) { return <button type="button" className="atlas-btn atlas-btn-primary" onClick={onClick} aria-label={ariaLabel}>{children}</button> }
-export function AtlasSecondaryButton({ children, onClick }) { return <button type="button" className="atlas-btn atlas-btn-secondary" onClick={onClick}>{children}</button> }
-export function AtlasProgress({ value, max = 100, label }) { const width = Math.max(0, Math.min(100, max ? (Number(value || 0) / max) * 100 : 0)); return <div className="atlas-progress" role="progressbar" aria-label={label} aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(width)}><span style={{ width: `${width}%` }}/></div> }
+export function AtlasCard({ className = '', children }) { return <section className={`atlas-card ${className}`} style={sharedComponentStyles.card}>{children}</section> }
+export function AtlasPrimaryButton({ children, onClick, ariaLabel }) { return <button type="button" className="atlas-btn atlas-btn-primary" style={sharedComponentStyles.button.primary} onClick={onClick} aria-label={ariaLabel}>{children}</button> }
+export function AtlasSecondaryButton({ children, onClick }) { return <button type="button" className="atlas-btn atlas-btn-secondary" style={sharedComponentStyles.button.secondary} onClick={onClick}>{children}</button> }
+export function AtlasProgress({ value, max = 100, label }) { const width = Math.max(0, Math.min(100, max ? (Number(value || 0) / max) * 100 : 0)); return <div className="atlas-progress" style={sharedComponentStyles.progress.track} role="progressbar" aria-label={label} aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(width)}><span style={{ ...sharedComponentStyles.progress.indicator, width: `${width}%` }}/></div> }
 
 const metricIcons = { recovery: HeartPulse, sleep: Moon, energy: Zap, motivation: Target, week: Activity }
 const navItems = [['today','Idag',Home],['coach','Coach',Bot],['goal','Mål',Target],['recovery','Kropp',HeartPulse],['decisions','Beslut',Activity]]
