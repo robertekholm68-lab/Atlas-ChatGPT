@@ -12,7 +12,7 @@ export default function AppAICoach() {
   const vm = useMemo(() => buildCoachPlatformViewModel(getAtlasState(), { name: 'Robert' }), [])
   return <div className="ai-coach-shell">
     <aside className="ai-coach-rail" aria-label="AI Coach navigation">
-      <div className="ai-brand"><span>A</span><div><strong>ATLAS</strong><small>AI COACH</small></div></div>
+      <div className="ai-brand"><img src="/assets/branding/logos/askr-wordmark-horizontal.png" alt="ASKR"/></div>
       <nav>{tabs.map(item => <button key={item} className={tab === item ? 'active' : ''} onClick={() => setTab(item)}>{item}</button>)}</nav>
       <div className="ai-personality"><span>Personality architecture</span>{Object.values(coachPersonalities).map(p => <b key={p.id}>{p.label}</b>)}</div>
     </aside>
