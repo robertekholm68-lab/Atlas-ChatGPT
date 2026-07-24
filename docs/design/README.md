@@ -1,18 +1,25 @@
-# ASKR Design Documentation
+# ASKR Design System
 
-Place the official ASKR Brand & UI Style Guide in this folder using the filename:
+This folder contains the official visual design documentation for ASKR.
+
+The Brand Style Guide PDF is the authoritative visual reference.
+
+Everything related to the visual identity belongs here.
+
+## Contents
+
+- Brand Style Guide
+- Logos
+- Icons
+- Typography
+- Color System
+- Layout
+- Components
+- Mockups
+- References
+
+The official PDF should be stored as:
 
 ASKR_Brand_Style_Guide.pdf
 
-This document is the authoritative visual reference for ASKR, including:
-- logo usage
-- color palette
-- typography
-- spacing and layout
-- component styling
-- UI states
-- design do/don't rules
-
-Do not modify any application code.
-Do not implement the design system yet.
-Only create the folder and the two files described above.
+Never duplicate design definitions elsewhere.
