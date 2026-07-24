@@ -74,7 +74,7 @@ test('phase 4 Recovery route renders with primary app navigation intact', async 
     const { default: AppPhase4 } = await import(modulePath)
     globalThis.localStorage = storageWith({ 'atlas-phase4': JSON.stringify({ page: 'recovery' }) })
     const html = renderToString(React.createElement(AppPhase4))
-    for (const label of ['Home', 'Workout', 'Recovery', 'AI Coach', 'Food', 'Progress']) {
+    for (const label of ['Home', 'Workout', 'Recovery', 'ASKR Coach', 'Food', 'Progress']) {
       assert.match(html, new RegExp(`>${label}<`))
     }
     assert.match(html, /Recovery command center/)

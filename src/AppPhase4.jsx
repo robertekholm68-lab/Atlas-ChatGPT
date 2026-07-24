@@ -121,7 +121,7 @@ export default function AppPhase4(){
     const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(data.programs)setPrograms(data.programs);if(data.history)setHistory(data.history);notify('Data importerad')}catch{notify('Filen kunde inte läsas')}};reader.readAsText(file)
   }
 
-  const nav=[['dashboard','Home',Activity],['programs','Program',Library],['session','Workout',Dumbbell],['recovery','Recovery',HeartPulse],['coach','AI Coach',Bot],['food','Food',Utensils],['progress','Progress',BarChart3]]
+  const nav=[['dashboard','Home',Activity],['programs','Program',Library],['session','Workout',Dumbbell],['recovery','Recovery',HeartPulse],['coach','ASKR Coach',Bot],['food','Food',Utensils],['progress','Progress',BarChart3]]
   const bottomNavItems = nav.map(([id, label, icon]) => ({ id, label, icon }))
   return <div className="p4-shell">
     <aside className="p4-sidebar"><div className="p4-brand"><img src="/assets/branding/logos/askr-logo-primary-dark.png" alt="ASKR"/></div><nav>{nav.map(([id,label,Icon])=><button key={id} className={page===id?'active':''} onClick={()=> id==='session' && !session ? setPage('programs') : setPage(id)}><Icon size={19}/><span>{label}</span></button>)}</nav><div className="p4-side-tools"><button onClick={exportData}><Download size={17}/>Exportera</button><button onClick={()=>fileInput.current?.click()}><Upload size={17}/>Importera</button><input ref={fileInput} type="file" accept="application/json" hidden onChange={importData}/></div></aside>
