@@ -1,12 +1,12 @@
 import http from 'node:http'
 
-const PORT = Number(process.env.ATLAS_API_PORT || 8787)
-const ENABLED = process.env.ATLAS_OPENAI_ENABLED === 'true'
+const PORT = Number(process.env.ASKR_API_PORT || 8787)
+const ENABLED = process.env.ASKR_OPENAI_ENABLED === 'true'
 const API_KEY = process.env.OPENAI_API_KEY
 const MODEL = process.env.OPENAI_MODEL
 
-const SYSTEM_INSTRUCTIONS = `You are ATLAS Coach, a cautious fitness coaching assistant.
-Use the supplied ATLAS profile and local context as the source of truth.
+const SYSTEM_INSTRUCTIONS = `You are ASKR Coach, a cautious fitness coaching assistant.
+Use the supplied ASKR profile and local context as the source of truth.
 Answer in Swedish unless the user writes in another language.
 Explain why you recommend something.
 Do not diagnose illness or injury. For sharp, increasing, neurological, chest-related or otherwise serious symptoms, recommend appropriate medical assessment.
@@ -120,12 +120,12 @@ const server = http.createServer(async (req, res) => {
     if (!result.reply) throw new Error('OpenAI returned an empty answer.')
     return sendJson(res, 200, result)
   } catch (error) {
-    console.error('[ATLAS OpenAI proxy]', error)
+    console.error('[ASKR OpenAI proxy]', error)
     return sendJson(res, 500, { error: 'Coach request failed.' })
   }
 })
 
 server.listen(PORT, () => {
-  console.log(`ATLAS API listening on http://localhost:${PORT}`)
+  console.log(`ASKR API listening on http://localhost:${PORT}`)
   console.log(`ChatGPT integration: ${ENABLED ? 'enabled' : 'disabled'}`)
 })

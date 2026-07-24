@@ -39,7 +39,7 @@ function trendLabel(rate, epsilon = 0.03) {
   return 'stable'
 }
 function insufficient(id, type, category, title, needed, found, now) {
-  return { id, type, category, title, description: `Insufficient local data: ${needed} observations are needed and ${found} were found.`, currentValue: null, predictedValue: null, unit: null, targetDate: null, horizonDays: 0, confidence: 0, confidenceLabel: 'insufficient', trend: 'unknown', assumptions: ['No projection is made when local history is too limited.'], evidence: [`Minimum observations: ${needed}`, `Available observations: ${found}`], recommendation: 'Keep logging data so ATLAS can estimate this cautiously later.', status: 'insufficient-data', createdAt: iso(now) }
+  return { id, type, category, title, description: `Insufficient local data: ${needed} observations are needed and ${found} were found.`, currentValue: null, predictedValue: null, unit: null, targetDate: null, horizonDays: 0, confidence: 0, confidenceLabel: 'insufficient', trend: 'unknown', assumptions: ['No projection is made when local history is too limited.'], evidence: [`Minimum observations: ${needed}`, `Available observations: ${found}`], recommendation: 'Keep logging data so ASKR can estimate this cautiously later.', status: 'insufficient-data', createdAt: iso(now) }
 }
 function weightedRate(points, maxDailyRate) {
   const sorted = [...points].sort((a, b) => a.t - b.t)

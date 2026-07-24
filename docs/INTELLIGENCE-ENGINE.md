@@ -1,6 +1,6 @@
-# ATLAS Intelligence Engine
+# ASKR Intelligence Engine
 
-ATLAS använder tills vidare en lokal kunskaps- och beslutsmotor. Ingen extern språkmodell eller API-nyckel krävs.
+ASKR använder tills vidare en lokal kunskaps- och beslutsmotor. Ingen extern språkmodell eller API-nyckel krävs.
 
 ## Levererat
 

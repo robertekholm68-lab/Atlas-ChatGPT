@@ -7,7 +7,7 @@ import { refreshAtlasPredictions } from './predictionEngine'
 import { refreshAtlasInsights } from './insightEngine'
 import { buildCoachRecommendation } from './coachIntelligenceEngine'
 
-export const ATLAS_EVENTS = {
+export const ASKR_EVENTS = {
   WORKOUT_FINISHED: 'workout.finished',
   PROFILE_UPDATED: 'profile.updated',
   GOAL_UPDATED: 'goal.updated',
@@ -84,7 +84,7 @@ export function dispatchAtlasEvent(type, payload = {}) {
   const current = getAtlasState()
   let next = { ...current, events: [event, ...(current.events || [])].slice(0, 250) }
 
-  if (type === ATLAS_EVENTS.WORKOUT_FINISHED) {
+  if (type === ASKR_EVENTS.WORKOUT_FINISHED) {
     if ((current.workouts || []).some(workout => String(workout.id) === String(payload.id))) return null
     const workout = normalizeWorkout(payload)
     const muscles = applyWorkoutToRecovery(current.recovery?.muscles, workout, workoutTimestamp(workout))
@@ -102,14 +102,14 @@ export function dispatchAtlasEvent(type, payload = {}) {
     next = attachDecisions(next, { trigger: type, workout })
   }
 
-  if (type === ATLAS_EVENTS.PROFILE_UPDATED) {
+  if (type === ASKR_EVENTS.PROFILE_UPDATED) {
     next = { ...next, profile: { ...(current.profile || {}), ...payload } }
     next = refreshAtlasMemory(next)
     next = refreshAtlasPredictions(next)
     next = attachDecisions(next, { trigger: type })
   }
 
-  if (type === ATLAS_EVENTS.GOAL_UPDATED) {
+  if (type === ASKR_EVENTS.GOAL_UPDATED) {
     const goal = normalizeGoal(payload)
     const goals = [...(current.goals || [])]
     const index = goals.findIndex(item => item.id === goal.id)
@@ -129,26 +129,26 @@ export function dispatchAtlasEvent(type, payload = {}) {
     next = attachDecisions(next, { trigger: type, goal, goalPlan: plan })
   }
 
-  if (type === ATLAS_EVENTS.DAILY_CHECK_IN) {
+  if (type === ASKR_EVENTS.DAILY_CHECK_IN) {
     next = { ...next, profile: { ...(current.profile || {}), checkIn: { ...(current.profile?.checkIn || {}), ...payload } } }
     next = attachDecisions(next, { trigger: type })
   }
 
-  if (type === ATLAS_EVENTS.BODY_MEASUREMENT_UPDATED) {
+  if (type === ASKR_EVENTS.BODY_MEASUREMENT_UPDATED) {
     next = { ...next, bodyMeasurements: [payload, ...(current.bodyMeasurements || [])].slice(0, 250) }
     next = refreshAtlasPredictions(next)
     next = attachDecisions(next, { trigger: type })
   }
 
-  if (type === ATLAS_EVENTS.INSIGHT_REGENERATED) {
+  if (type === ASKR_EVENTS.INSIGHT_REGENERATED) {
     next = refreshAtlasInsights(next)
   }
 
-  if (type === ATLAS_EVENTS.PREDICTION_REGENERATED) {
+  if (type === ASKR_EVENTS.PREDICTION_REGENERATED) {
     next = refreshAtlasPredictions(next)
   }
 
-  if (type === ATLAS_EVENTS.RECOVERY_UPDATED) {
+  if (type === ASKR_EVENTS.RECOVERY_UPDATED) {
     next = {
       ...next,
       recovery: { ...(current.recovery || {}), ...payload, updatedAt: event.createdAt }
@@ -165,17 +165,17 @@ export function dispatchAtlasEvent(type, payload = {}) {
 }
 
 export function recordCompletedWorkout(workout) {
-  return dispatchAtlasEvent(ATLAS_EVENTS.WORKOUT_FINISHED, workout)
+  return dispatchAtlasEvent(ASKR_EVENTS.WORKOUT_FINISHED, workout)
 }
 
 export function updateAtlasGoal(goal) {
-  return dispatchAtlasEvent(ATLAS_EVENTS.GOAL_UPDATED, goal)
+  return dispatchAtlasEvent(ASKR_EVENTS.GOAL_UPDATED, goal)
 }
 
 export function updateAtlasRecovery(recovery) {
-  return dispatchAtlasEvent(ATLAS_EVENTS.RECOVERY_UPDATED, recovery)
+  return dispatchAtlasEvent(ASKR_EVENTS.RECOVERY_UPDATED, recovery)
 }
 
 export function updateAtlasDailyCheckIn(checkIn) {
-  return dispatchAtlasEvent(ATLAS_EVENTS.DAILY_CHECK_IN, checkIn)
+  return dispatchAtlasEvent(ASKR_EVENTS.DAILY_CHECK_IN, checkIn)
 }

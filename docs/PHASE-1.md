@@ -1,12 +1,12 @@
 # Fas 1 – Appskal och designsystem
 
-Fas 1 etablerar ATLAS visuella och tekniska frontendgrund.
+Fas 1 etablerar ASKR visuella och tekniska frontendgrund.
 
 ## Levererat
 
 - React 19 + Vite
 - Responsivt appskal för mobil, surfplatta och desktop
-- Mörkt ATLAS-tema med design tokens
+- Mörkt ASKR-tema med design tokens
 - Desktop-sidebar och mobil bottennavigation
 - Fem huvudvyer: Idag, Träning, Kropp, Kost och Coach
 - Återanvändbara kort, mätvärden, progressindikatorer och knappar

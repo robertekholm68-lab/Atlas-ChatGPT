@@ -43,7 +43,7 @@ export default function ProductionPlatform() {
 
   return <main className="production-platform">
     <section className="production-hero">
-      <div><span className="production-pill"><Cloud size={16}/> Cloud 1.0</span><h1>ATLAS Production Platform</h1><p>Authentication, profiles, sync, offline queue, storage, protected access, settings, notifications and export architecture for beta users.</p></div>
+      <div><span className="production-pill"><Cloud size={16}/> Cloud 1.0</span><h1>ASKR Production Platform</h1><p>Authentication, profiles, sync, offline queue, storage, protected access, settings, notifications and export architecture for beta users.</p></div>
       <div className={`sync-card ${sync.state}`} aria-live="polite"><Cloud size={28}/><strong>{statusLabel}</strong><span>{sync.pending || 0} queued changes</span><small>Last sync: {sync.lastSyncAt ? new Date(sync.lastSyncAt).toLocaleString() : 'Not synced yet'}</small></div>
     </section>
 

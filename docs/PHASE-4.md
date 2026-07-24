@@ -1,6 +1,6 @@
 # Fas 4 – Intelligent träningssystem
 
-Fas 4 bygger vidare på passloggningen och gör ATLAS till ett komplett lokalt träningssystem för program, övningar, progression, kalender och analys.
+Fas 4 bygger vidare på passloggningen och gör ASKR till ett komplett lokalt träningssystem för program, övningar, progression, kalender och analys.
 
 ## Levererat
 
@@ -54,7 +54,7 @@ Fas 4 bygger vidare på passloggningen och gör ATLAS till ett komplett lokalt t
 
 - Lokal lagring under `atlas-phase4`
 - Export av program och historik som JSON
-- Import från en tidigare ATLAS-export
+- Import från en tidigare ASKR-export
 - Delningsdialog med programkod och QR-liknande visning
 - Responsiv layout för mobil, surfplatta och desktop
 

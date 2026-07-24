@@ -39,7 +39,7 @@ export function calculateReadiness(profile) {
 
 function latestWorkoutEvidence(profile) {
   const latest = profile.coreSummary?.latestWorkout
-  if (!latest) return 'Ingen genomförd träning finns ännu i ATLAS Core'
+  if (!latest) return 'Ingen genomförd träning finns ännu i ASKR Core'
   return `Senaste pass ${latest.name}: ${latest.sets || 0} set, ${latest.duration || 0} min`
 }
 
@@ -55,7 +55,7 @@ export function buildDailyDecision(profile) {
     title = 'Byt till smärtfritt alternativ'
     action = 'modify'
     volumeChange = -35
-    reason = 'Du har rapporterat tydlig smärta. ATLAS prioriterar smärtfria rörelser och lägre belastning.'
+    reason = 'Du har rapporterat tydlig smärta. ASKR prioriterar smärtfria rörelser och lägre belastning.'
   } else if (readiness < 45) {
     title = 'Återhämtningsdag'
     action = 'recovery'
@@ -105,7 +105,7 @@ export function buildGoalPlan(goal) {
 
 function describeLatestWorkout(profile) {
   const latest = profile.coreSummary?.latestWorkout
-  if (!latest) return 'Du har ännu inget genomfört pass i ATLAS Core. Avsluta ett pass i träningsmodulen så kan jag analysera det.'
+  if (!latest) return 'Du har ännu inget genomfört pass i ASKR Core. Avsluta ett pass i träningsmodulen så kan jag analysera det.'
   const date = latest.completedAt ? new Date(latest.completedAt).toLocaleDateString('sv-SE') : 'okänt datum'
   const volume = Number(latest.volume || 0).toLocaleString('sv-SE')
   return `Ditt senaste pass var ${latest.name} den ${date}: ${latest.sets || 0} set, ${volume} kg total volym och ${latest.duration || 0} minuter. Återhämtningen har räknats om utifrån de genomförda seten.`
@@ -121,5 +121,5 @@ export function answerCoachQuestion(text, profile) {
   if (q.includes('varför')) return { reply: `${decision.reason} Underlaget är: ${decision.evidence.join(', ')}.`, followUps: ['Visa alternativ', 'Acceptera rekommendationen'] }
   if (q.includes('progress') || q.includes('öka')) return { reply: KNOWLEDGE_BASE.progression, followUps: ['Vad säger mitt senaste pass?', 'Behåll nuvarande belastning'] }
   if (q.includes('mål')) return { reply: `Ditt mål är ${profile.goal.target}. Med ${profile.goal.weeks} veckor kvar bör fokus vara följsamhet, gradvis progression och veckovis utvärdering.`, followUps: ['Visa målplan', 'Ändra mål'] }
-  return { reply: `Jag kan hjälpa dig med dagens träning, återhämtning, progression, smärta och mål. Jag ser just nu ${profile.coreSummary?.workoutCount || 0} pass i ATLAS Core.`, followUps: ['Hur bör jag träna idag?', 'Vad säger mitt senaste pass?', 'Hur ligger jag till mot målet?'] }
+  return { reply: `Jag kan hjälpa dig med dagens träning, återhämtning, progression, smärta och mål. Jag ser just nu ${profile.coreSummary?.workoutCount || 0} pass i ASKR Core.`, followUps: ['Hur bör jag träna idag?', 'Vad säger mitt senaste pass?', 'Hur ligger jag till mot målet?'] }
 }

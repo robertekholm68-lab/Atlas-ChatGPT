@@ -126,7 +126,7 @@ export function evaluateAtlasDecisions(state, context = {}) {
 
   steps.push({ label: `${decisions.length} beslut skapade`, status: 'done' })
   if (records.length) steps.push({ label: `${records.length} personbästa upptäckta`, status: 'done' })
-  steps.push({ label: 'ATLAS Store och anslutna vyer uppdaterade', status: 'done' })
+  steps.push({ label: 'ASKR Store och anslutna vyer uppdaterade', status: 'done' })
 
   return {
     current: decisions[0],

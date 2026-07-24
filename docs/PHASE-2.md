@@ -1,6 +1,6 @@
 # Fas 2 – Levande kroppskarta och återhämtning
 
-Fas 2 gör kroppen till ATLAS primära gränssnitt för träningsbelastning och återhämtning.
+Fas 2 gör kroppen till ASKR primära gränssnitt för träningsbelastning och återhämtning.
 
 ## Levererat
 

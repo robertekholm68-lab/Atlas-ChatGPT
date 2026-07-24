@@ -1,4 +1,4 @@
-# ATLAS UI Sprint 1B — Workout
+# ASKR UI Sprint 1B — Workout
 
 This sprint locks the Workout landing and active-session visual hierarchy. It introduces focused mobile polish for exercise navigation, set logging, completion state, sticky session actions, muscle-load feedback and reduced-motion behavior. No AI or training business logic is added.
 

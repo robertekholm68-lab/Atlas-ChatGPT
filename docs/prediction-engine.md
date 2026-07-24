@@ -1,6 +1,6 @@
-# ATLAS Prediction Engine
+# ASKR Prediction Engine
 
-The local Prediction Engine creates cautious, explainable projections from data already stored in ATLAS. It is deterministic, does not call external APIs or language models, and never treats projections as facts.
+The local Prediction Engine creates cautious, explainable projections from data already stored in ASKR. It is deterministic, does not call external APIs or language models, and never treats projections as facts.
 
 ## Supported predictions
 

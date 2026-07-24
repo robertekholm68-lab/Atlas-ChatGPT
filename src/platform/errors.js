@@ -18,7 +18,7 @@ export function friendlyError(error) {
     [ErrorKind.AUTH]: 'Vi kunde inte verifiera din session. Logga in igen.',
     [ErrorKind.VALIDATION]: 'Kontrollera markerade fält och försök igen.',
     [ErrorKind.NETWORK]: 'Nätverket svarar inte just nu. Försök igen om en stund.',
-    [ErrorKind.SERVER]: 'ATLAS kunde inte slutföra åtgärden just nu.',
+    [ErrorKind.SERVER]: 'ASKR kunde inte slutföra åtgärden just nu.',
     [ErrorKind.STORAGE]: 'Filen kunde inte laddas upp. Kontrollera format och anslutning.'
   }
   return messages[kind] || messages[ErrorKind.SERVER]

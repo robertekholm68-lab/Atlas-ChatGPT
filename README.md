@@ -1,3 +1,3 @@
-# ATLAS ChatGPT
+# ASKR ChatGPT
 
 Frontend redesign project.

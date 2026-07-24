@@ -1,6 +1,6 @@
-# ATLAS Blueprint 1.0
+# ASKR Blueprint 1.0
 
-Detta dokument är den gemensamma produktplanen för ATLAS fram till version 1.0. Status ska baseras på faktisk kod och verifierade flöden, inte enbart på planerade funktioner.
+Detta dokument är den gemensamma produktplanen för ASKR fram till version 1.0. Status ska baseras på faktisk kod och verifierade flöden, inte enbart på planerade funktioner.
 
 ## Statusnyckel
 
@@ -11,7 +11,7 @@ Detta dokument är den gemensamma produktplanen för ATLAS fram till version 1.0
 
 ## Viktig arkitekturregel
 
-ATLAS ska vara en sammanhängande produkt. Nya moduler får inte ersätta tidigare moduler i `main.jsx`. Den gemensamma produktskalet ska ge åtkomst till både träningssystemet och Intelligence-systemet. Senare läggs Recovery, Goals, Nutrition, Health och övriga moduler in i samma skal.
+ASKR ska vara en sammanhängande produkt. Nya moduler får inte ersätta tidigare moduler i `main.jsx`. Den gemensamma produktskalet ska ge åtkomst till både träningssystemet och Intelligence-systemet. Senare läggs Recovery, Goals, Nutrition, Health och övriga moduler in i samma skal.
 
 ---
 

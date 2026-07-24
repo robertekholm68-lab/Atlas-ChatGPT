@@ -1,4 +1,4 @@
--- ATLAS Cloud 1.0 normalized PostgreSQL schema for Supabase.
+-- ASKR Cloud 1.0 normalized PostgreSQL schema for Supabase.
 create type atlas_role as enum ('user','coach','admin','team_owner');
 create type sync_operation as enum ('insert','update','delete');
 

@@ -1,4 +1,4 @@
-# ATLAS assets
+# ASKR assets
 
 Replace these intentional placeholders with final branded production assets without rewriting components.
 

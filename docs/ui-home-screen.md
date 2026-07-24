@@ -1,11 +1,11 @@
-# ATLAS UI Sprint 1A — Home / Today screen
+# ASKR UI Sprint 1A — Home / Today screen
 
 ## Screen hierarchy
-1. **App header** — compact ATLAS mark, Today label and profile/avatar access.
+1. **App header** — compact ASKR mark, Today label and profile/avatar access.
 2. **Contextual greeting** — time-aware Swedish greeting and first name when the recommendation/profile exposes one.
 3. **Today's primary decision** — dominant `DAGENS BESLUT` card driven by Coach Intelligence recommendation fields.
 4. **Daily status** — compact metrics for only available recovery, sleep, energy, motivation and weekly completion values.
-5. **Muscle / recovery overview** — uses ATLAS Core muscle recovery values and keeps the existing premium body-map direction deferred rather than replacing it with generic art.
+5. **Muscle / recovery overview** — uses ASKR Core muscle recovery values and keeps the existing premium body-map direction deferred rather than replacing it with generic art.
 6. **Today's workout** — workout card sourced from the current recommendation/decision and routed through known existing app pages.
 7. **Weekly overview** — lightweight progress toward the available weekly target.
 8. **Latest activity** — latest completed workout from Coach/Core context, otherwise an honest empty state.

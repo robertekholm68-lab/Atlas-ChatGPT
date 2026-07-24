@@ -61,7 +61,7 @@ export default function AppAtlas() {
 
   return (
     <div className="atlas-product-shell">
-      <div className="atlas-module-switch" aria-label="Välj ATLAS-modul">
+      <div className="atlas-module-switch" aria-label="Välj ASKR-modul">
         <button
           type="button"
           className={module === 'training' ? 'active' : ''}
@@ -110,7 +110,7 @@ export default function AppAtlas() {
           type="button"
           className={`atlas-dev-toggle ${showDevPanel ? 'active' : ''}`}
           onClick={() => setShowDevPanel(value => !value)}
-          title="Öppna intern ATLAS-diagnostik"
+          title="Öppna intern ASKR-diagnostik"
           aria-pressed={showDevPanel}
         >
           <Bug size={17}/>

@@ -1,7 +1,7 @@
 const API_PATH = '/api/coach'
 
 export function getChatGptStatus() {
-  const enabled = import.meta.env.VITE_ATLAS_CHATGPT_ENABLED === 'true'
+  const enabled = import.meta.env.VITE_ASKR_CHATGPT_ENABLED === 'true'
   return {
     provider: 'openai',
     prepared: true,
