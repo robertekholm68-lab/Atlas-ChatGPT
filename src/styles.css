@@ -33,7 +33,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 248px minmax(0, 1fr); }
 .sidebar { position: sticky; top: 0; height: 100vh; padding: 26px 18px; border-right: 1px solid var(--border); background: rgba(4, 13, 10, .72); backdrop-filter: blur(22px); display: flex; flex-direction: column; z-index: 20; }
-.brand { display: flex; gap: 12px; align-items: center; padding: 4px 8px 32px; }
+.brand { display: flex; gap: 12px; align-items: center; width: 100%; padding: 0 0 32px; }
 .brand-mark { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; color: #07110e; background: linear-gradient(145deg, #c1ff85, #72d76d); font-weight: 900; box-shadow: 0 12px 30px rgba(137,232,102,.22); }
 .brand strong { display: block; letter-spacing: .14em; font-size: 15px; }
 .brand small { display: block; color: var(--muted); font-size: 9px; letter-spacing: .17em; margin-top: 3px; }
@@ -155,7 +155,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 @media (max-width: 1050px) {
   .app-shell { grid-template-columns: 90px minmax(0,1fr); }
   .sidebar { padding-inline: 13px; }
-  .brand { justify-content: center; }.brand > div:last-child, .nav-button:not(.compact) span, .profile-card > span:nth-child(2), .profile-card svg { display:none; }
+  .brand { justify-content: center; padding-bottom: 28px; }.brand > div:last-child, .nav-button:not(.compact) span, .profile-card > span:nth-child(2), .profile-card svg { display:none; }
   .nav-button:not(.compact) { justify-content:center; padding:0; }.profile-card { grid-template-columns:1fr; place-items:center; }
   .profile-popover { left: 74px; }
   .span-8, .span-7 { grid-column: span 12; }.span-4, .span-5 { grid-column: span 6; }
@@ -188,4 +188,5 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 @keyframes atlasGrowX{from{transform:scaleX(.15);opacity:.55}}@keyframes atlasGrowY{from{transform:scaleY(.12);opacity:.55}}
 .nav-button svg,.icon-button svg,.primary-button svg,.text-button svg,.status-pill svg{stroke-width:2;flex:0 0 auto}.toast{animation:toastIn .25s ease,atlasSuccess .55s var(--motion-spring)}
 @media (max-width: 720px){button,.primary-button,.text-button,.icon-button,.nav-button,.profile-card{min-height:44px}.main-content{padding-left:max(15px,env(safe-area-inset-left));padding-right:max(15px,env(safe-area-inset-right));}.mobile-nav{bottom:max(10px,env(safe-area-inset-bottom));}}
-.brand-logo { display: block; height: 42px; width: auto; object-fit: contain; }
+.brand-logo { display: block; width: 100%; max-width: 190px; height: auto; max-height: 72px; object-fit: contain; opacity: 1; filter: none; }
+@media (max-width: 1050px) { .brand-logo { max-width: 64px; max-height: 64px; } }
