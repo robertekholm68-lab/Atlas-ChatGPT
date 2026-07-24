@@ -32,7 +32,7 @@ export function ExerciseRow({ index, title, subtitle, value, children, onClick }
 }
 
 export function BottomNavigation({ items, active, onChange }) {
-  return <nav className="atlas-bottom-nav" aria-label="Primär mobilnavigation">{items.map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-current={active === id ? 'page' : undefined} className={active === id ? 'active' : ''} onClick={() => onChange(id)}><Icon size={20} strokeWidth={2}/><span>{label}</span></button>)}</nav>
+  return <nav className="atlas-bottom-nav" aria-label="Primär mobilnavigation">{items.map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-label={label} aria-current={active === id ? 'page' : undefined} className={active === id ? 'active' : ''} onClick={() => onChange(id)}><Icon size={20} strokeWidth={2}/><span>{label}</span></button>)}</nav>
 }
 
 export function SkeletonBlock({ className = '', label = 'Laddar innehåll' }) {

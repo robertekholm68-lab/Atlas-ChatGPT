@@ -40,3 +40,38 @@
 @media(max-width:720px){.category-chips button,.quick-log-actions button{min-height:40px;padding:0 11px}.premium-detail h2{font-size:34px}.set-row.premium{grid-template-columns:25px repeat(3,minmax(44px,1fr)) 40px 34px}.set-delete-button{width:34px;height:34px}.quick-log-actions{margin-left:-2px;margin-right:-2px}.quick-log-actions button{font-size:12px}}
 @media(max-width:430px){.set-row.premium{grid-template-columns:24px repeat(3,minmax(40px,1fr)) 38px 30px}.set-delete-button{width:30px;height:30px}}
 .p4-brand>img{display:block;height:42px;width:auto;object-fit:contain}
+
+/* ASKR Phase 5 shared BottomNavigation refinement */
+@media(max-width:720px){
+  .atlas-bottom-nav{
+    left:var(--space-8,8px);
+    right:var(--space-8,8px);
+    bottom:var(--space-8,8px);
+    gap:var(--space-4,4px);
+    padding:var(--space-8,8px) var(--space-8,8px) calc(var(--space-8,8px) + env(safe-area-inset-bottom));
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    background:var(--surface-strong);
+    box-shadow:none;
+  }
+
+  .atlas-bottom-nav button{
+    min-height:var(--space-48,48px);
+    min-width:var(--space-48,48px);
+    border:1px solid transparent;
+    border-radius:var(--radius-md);
+    color:var(--muted);
+    transition:background var(--motion-fast,150ms ease-out),border-color var(--motion-fast,150ms ease-out),color var(--motion-fast,150ms ease-out);
+  }
+
+  .atlas-bottom-nav button.active{
+    color:var(--accent);
+    background:var(--surface-soft);
+    border-color:var(--accent);
+  }
+
+  .atlas-bottom-nav button:not(.active):hover{
+    color:var(--text);
+    background:var(--surface-soft);
+  }
+}
