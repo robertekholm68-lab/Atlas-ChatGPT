@@ -15,6 +15,7 @@ import {
   getFatigueMultiplier,
   getMrvPercentage,
   getMuscleActivation,
+  getMuscleUiStatus,
   getTrainingZone,
   muscleThresholds,
   trackWeeklyVolume,
@@ -133,12 +134,26 @@ test('MuscleIntelligence returns structured facts only with placeholders', () =>
   assert.equal(intelligence.chest.trainingZone, 'below-mev')
   assert.equal(intelligence.chest.recovery, null)
   assert.equal(intelligence.chest.recommendation, null)
+  assert.equal(intelligence.chest.uiStatus, 'recovered')
+  assert.equal(intelligence.chest.colorToken, 'text-2')
+  assert.equal(intelligence.chest.glowIntensity, 0)
   assert.ok(!('reasoning' in intelligence.chest))
+})
+
+test('MuscleIntelligence maps every UI load state at zone boundaries', () => {
+  assert.equal(getMuscleUiStatus({ effectiveSets: 0 }), 'inactive')
+  assert.equal(getMuscleUiStatus({ effectiveSets: 1, trainingZone: 'below-mev', percentageTowardMrv: 5 }), 'recovered')
+  assert.equal(getMuscleUiStatus({ effectiveSets: 10, trainingZone: 'productive', percentageTowardMrv: 50 }), 'stimulated')
+  assert.equal(getMuscleUiStatus({ effectiveSets: 18, trainingZone: 'high', percentageTowardMrv: 82 }), 'high_load')
+  assert.equal(getMuscleUiStatus({ effectiveSets: 20, trainingZone: 'high', percentageTowardMrv: 91 }), 'near_mrv')
+  assert.equal(getMuscleUiStatus({ effectiveSets: 23, trainingZone: 'above-mrv', percentageTowardMrv: 105 }), 'recovery_warning')
 })
 
 test('engines handle empty and unknown data safely', () => {
   assert.deepEqual(evaluateWorkoutSessions([], exerciseLibrary, now), {})
-  assert.deepEqual(buildMuscleIntelligence([], exerciseLibrary, now), {})
+  const emptyIntelligence = buildMuscleIntelligence([], exerciseLibrary, now)
+  assert.equal(Object.keys(emptyIntelligence).length, Object.keys(muscleThresholds).length)
+  assert.ok(Object.values(emptyIntelligence).every((muscle) => muscle.uiStatus === 'inactive'))
   assert.deepEqual(getMuscleActivation({ primary: ['calves'], secondary: ['unknown'] }), { calves: 1, unknown: 0.5 })
   assert.equal(evaluateWorkoutSessions([{ completedAt: now.toISOString(), exercises: [{ exerciseId: 'missing', sets: [{ weight: 1, reps: 10, rpe: 10 }] }] }], exerciseLibrary, now).missing, undefined)
 })
