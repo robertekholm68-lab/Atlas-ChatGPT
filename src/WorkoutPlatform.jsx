@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ArrowRight, Award, Check, ChevronRight, Clock, Dumbbell, Edit3, Flame, Heart, History, Plus, Search, Sparkles, Star, Timer, Trash2, X, Zap } from 'lucide-react'
 import { activeWorkout, exerciseLibrary, muscles } from './workoutData'
+import { buildMuscleIntelligenceViewModel } from './muscleIntelligenceViewModel.js'
 
 const equipmentFilters = ['Machine','Cable','Barbell','Dumbbell','Bodyweight']
 const difficultyFilters = ['Beginner','Intermediate','Advanced']
@@ -13,6 +14,10 @@ export default function WorkoutPlatform({ notify }) {
   const [filters, setFilters] = useState({ muscle:'All', equipment:'All', difficulty:'All', type:'All', favorites:false, recent:false, custom:false })
   const [workout, setWorkout] = useState(activeWorkout)
   const [exerciseIndex, setExerciseIndex] = useState(0)
+  const [selectedMuscleId, setSelectedMuscleId] = useState('chest')
+  const intelligence = useMemo(() => buildMuscleIntelligenceViewModel([
+    { completedAt: new Date().toISOString(), exercises: workout.exercises },
+  ], exerciseLibrary, selectedMuscleId), [workout, selectedMuscleId])
   const selectedExercise = exerciseLibrary.find(ex => ex.id === selectedId) || exerciseLibrary[0]
   const openDetail = id => { setSelectedId(id); setMode('detail') }
   const complete = () => { setMode('summary'); notify('Workout completed — premium summary ready') }
@@ -20,21 +25,21 @@ export default function WorkoutPlatform({ notify }) {
     <div className="workout-tabs" role="tablist" aria-label="Workout platform sections">
       {['active','browser','detail','summary'].map(tab => <button key={tab} role="tab" aria-selected={mode===tab} className={mode===tab?'active':''} onClick={()=>setMode(tab)}>{tab}</button>)}
     </div>
-    {mode === 'active' && <ActiveWorkout workout={workout} setWorkout={setWorkout} exerciseIndex={exerciseIndex} setExerciseIndex={setExerciseIndex} onDetail={openDetail} onComplete={complete} notify={notify}/>} 
+    {mode === 'active' && <ActiveWorkout workout={workout} setWorkout={setWorkout} exerciseIndex={exerciseIndex} setExerciseIndex={setExerciseIndex} onDetail={openDetail} onComplete={complete} notify={notify} intelligence={intelligence} onSelectMuscle={setSelectedMuscleId}/>}
     {mode === 'browser' && <ExerciseBrowser query={query} setQuery={setQuery} filters={filters} setFilters={setFilters} onDetail={openDetail}/>} 
     {mode === 'detail' && <ExerciseDetail exercise={selectedExercise} onStart={()=>{setMode('active'); notify(`${selectedExercise.name} queued`)}}/>}
     {mode === 'summary' && <WorkoutSummary workout={workout} onRestart={()=>setMode('active')}/>} 
   </div>
 }
 
-function ActiveWorkout({ workout, setWorkout, exerciseIndex, setExerciseIndex, onDetail, onComplete, notify }) {
+function ActiveWorkout({ workout, setWorkout, exerciseIndex, setExerciseIndex, onDetail, onComplete, notify, intelligence, onSelectMuscle }) {
   const block = workout.exercises[exerciseIndex]
   const exercise = exerciseLibrary.find(ex => ex.id === block.exerciseId)
   const previous = block.sets.at(-1) || { weight: 90, reps: 6, rpe: 8 }
   const currentSet = block.sets.length + 1
   const progress = Math.round((workout.exercises.reduce((sum, x) => sum + x.sets.length, 0) / workout.exercises.reduce((sum, x) => sum + x.targetSets, 0)) * 100)
   const next = workout.exercises[exerciseIndex+1] && exerciseLibrary.find(ex => ex.id === workout.exercises[exerciseIndex+1].exerciseId)
-  const addSet = (delta = 0) => setWorkout(w => ({...w, exercises:w.exercises.map((x,i)=> i===exerciseIndex ? {...x, sets:[...x.sets, { weight: previous.weight + delta, reps: previous.reps, rpe: previous.rpe }]} : x)}))
+  const addSet = (delta = 0) => setWorkout(w => ({...w, exercises:w.exercises.map((x,i)=> i===exerciseIndex ? {...x, sets:[...x.sets, { weight: previous.weight + delta, reps: previous.reps, rpe: previous.rpe, completedAt: new Date().toISOString() }]} : x)}))
   const deleteSet = () => setWorkout(w => ({...w, exercises:w.exercises.map((x,i)=> i===exerciseIndex ? {...x, sets:x.sets.slice(0,-1)} : x)}))
   const skip = () => setExerciseIndex(i => Math.min(i + 1, workout.exercises.length - 1))
   return <div className="active-workout-grid">
@@ -61,11 +66,32 @@ function ActiveWorkout({ workout, setWorkout, exerciseIndex, setExerciseIndex, o
     </section>
     <section className="rest-card"><Timer size={22}/><strong>{Math.floor(block.rest/60)}:{String(block.rest%60).padStart(2,'0')}</strong><span>Rest timer · tempo {block.tempo}</span><button onClick={()=>notify('Rest adjusted')}>+30 sec</button></section>
     <section className="muscle-session-card"><MusclePreview primary={exercise.primary} secondary={exercise.secondary}/><div><h3>Muscles</h3><p>Primary: {exercise.primary.map(id=>muscles[id]?.name).join(', ')}</p><p>Secondary: {exercise.secondary.map(id=>muscles[id]?.name).join(', ') || 'None'}</p></div></section>
+    <MuscleIntelligencePanel intelligence={intelligence} onSelectMuscle={onSelectMuscle}/>
     <section className="notes-card"><label>Exercise notes<textarea defaultValue={exercise.notes} /></label><label>Tempo<input defaultValue={block.tempo}/></label><label>Rest<input defaultValue={`${block.rest}s`}/></label></section>
     <section className="next-card"><span>Next exercise</span><strong>{next?.name || 'Workout summary'}</strong><p>{next ? `${next.primary.map(id=>muscles[id]?.name).join(', ')} · ${next.equipment}` : 'Review volume, PRs, fatigue and coach-ready signals.'}</p></section>
     <div className="sticky-workout-actions"><button className="text-button" onClick={skip}>Skip</button><button className="primary-button" onClick={exerciseIndex === workout.exercises.length - 1 ? onComplete : () => setExerciseIndex(i=>i+1)}><Dumbbell size={18}/>{exerciseIndex === workout.exercises.length - 1 ? 'Finish workout' : 'Next exercise'}</button></div>
   </div>
 }
+
+function MuscleIntelligencePanel({ intelligence, onSelectMuscle }) {
+  const selected = intelligence.selectedMuscle
+  return <section className="muscle-intelligence" aria-label="Muscle intelligence">
+    <div className="body-heat-map panel">
+      <div><span className="intelligence-kicker">Body heat map</span><h3>Weekly muscle load</h3></div>
+      <div className="heat-map-grid">{intelligence.muscles.map(muscle => <button key={muscle.id} type="button" className={selected?.id === muscle.id ? 'selected' : ''} onClick={() => onSelectMuscle(muscle.id)} aria-label={`${muscle.name}: ${muscle.uiStatus.replaceAll('_', ' ')}`} style={{'--muscle-color':muscle.color,'--muscle-glow':muscle.glowIntensity}}><i/><span>{muscle.name}</span></button>)}</div>
+    </div>
+    {selected && <article className="muscle-detail-card panel">
+      <span className="intelligence-kicker">Selected muscle</span><h3>{selected.name}</h3>
+      <dl><Fact label="Effective sets" value={selected.effectiveSets}/><Fact label="Weekly volume" value={`${selected.weeklyVolume.toLocaleString()} kg`}/><Fact label="Frequency" value={`${selected.frequency} days`}/><Fact label="Last trained" value={selected.lastTrainedLabel}/><Fact label="Training zone" value={selected.zoneLabel}/><Fact label="Readiness" value="Not available"/><Fact label="Recommendation" value="Not available"/></dl>
+    </article>}
+    <div className="weekly-volume-panel panel">
+      <div><span className="intelligence-kicker">This week</span><h3>Volume by muscle</h3></div>
+      <div className="volume-table" role="table"><div className="volume-row heading" role="row"><span>Muscle</span><span>Effective sets</span><span>Zone</span></div>{intelligence.muscles.map(muscle => <button key={muscle.id} type="button" className="volume-row" role="row" onClick={() => onSelectMuscle(muscle.id)}><span><i style={{background:muscle.color}}/>{muscle.name}</span><strong>{muscle.effectiveSets}</strong><span>{muscle.zoneLabel}</span></button>)}</div>
+    </div>
+  </section>
+}
+
+function Fact({ label, value }) { return <div><dt>{label}</dt><dd>{value}</dd></div> }
 function SetStat({label,value,note}){return <div className="set-stat"><span>{label}</span><strong>{value}</strong><small>{note}</small></div>}
 
 function ExerciseBrowser({ query, setQuery, filters, setFilters, onDetail }) {
