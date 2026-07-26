@@ -6,6 +6,7 @@ import { formatRestTime, normalizeRestTimer, remainingRestSeconds } from './rest
 import { addWorkoutSet, completeWorkoutSet, extendWorkoutRest, pauseWorkoutRest, removeWorkoutSet, resumeWorkoutRest, saveCompletedWorkout, skipWorkoutRest, startWorkout, updateWorkoutSet, workoutSummary } from './workoutSessionModel'
 import { exerciseLibrary as intelligenceExerciseLibrary } from './workoutData'
 import { buildGoalProfile, explainCoachDecision, makeCoachDecision } from './engines/index.js'
+import BodyIntelligenceDashboard from './BodyIntelligenceDashboard.jsx'
 import {
   Activity, Apple, Archive, ArrowDown, ArrowUp, BarChart3, Bot, CalendarDays, Check,
   AlertCircle,
@@ -147,7 +148,7 @@ export default function AppPhase4(){
       {page==='stats'&&<StatsView history={history}/>}
       {page==='food'&&<FoodView notify={notify}/>}
       {page==='progress'&&<StatsView history={history}/>}
-      {page==='recovery'&&<RecoveryView/>}
+      {page==='recovery'&&<BodyIntelligenceDashboard workouts={getAtlasState().workouts} liveSession={session} exerciseLibrary={intelligenceExerciseLibrary} goal={{goal:'general_fitness',availableTime:45}} onNavigateToWorkout={()=>setPage('session')}/>}
       {page==='coach'&&<CoachView notify={notify}/>}
       {page==='session'&&session&&<LiveSession session={session} setSession={setSession} finishSession={finishSession}/>}
       {page==='session'&&!session&&<WorkoutLanding programs={programs} startProgram={startProgram}/>}
@@ -159,8 +160,8 @@ export default function AppPhase4(){
   </div>
 }
 
-const titleFor=p=>({dashboard:'Din träning',programs:'Program',exercises:'Övningsbank',calendar:'Kalender',history:'Workout complete',stats:'Progress',food:'Food',progress:'Progress',recovery:'Recovery',coach:'ASKR Coach',session:'Aktivt pass'}[p]||'ASKR')
-const subtitleFor=p=>({dashboard:'Allt du behöver för nästa smarta beslut.',programs:'Skapa, redigera och starta dina program.',exercises:'Sök och filtrera bland övningar och maskiner.',calendar:'Se rytm, kontinuitet och planerade pass.',history:'Summering efter avslutat pass.',stats:'Volym, progression och muskelbalans.',food:'Energi, protein och måltider med premiumöversikt.',progress:'Volym, progression och muskelbalans.',recovery:'Sömn, readiness och belastning i en lugn OLED-vy.',coach:'Din smarta coachvy utan ny AI-logik.',session:'Logga varje set utan att lämna vyn.'}[p]||'')
+const titleFor=p=>({dashboard:'Din träning',programs:'Program',exercises:'Övningsbank',calendar:'Kalender',history:'Workout complete',stats:'Progress',food:'Food',progress:'Progress',recovery:'Kroppsstatus',coach:'ASKR Coach',session:'Aktivt pass'}[p]||'ASKR')
+const subtitleFor=p=>({dashboard:'Allt du behöver för nästa smarta beslut.',programs:'Skapa, redigera och starta dina program.',exercises:'Sök och filtrera bland övningar och maskiner.',calendar:'Se rytm, kontinuitet och planerade pass.',history:'Summering efter avslutat pass.',stats:'Volym, progression och muskelbalans.',food:'Energi, protein och måltider med premiumöversikt.',progress:'Volym, progression och muskelbalans.',recovery:'Återhämtning, volym och coachens fokus i en vy.',coach:'Din smarta coachvy utan ny AI-logik.',session:'Logga varje set utan att lämna vyn.'}[p]||'')
 
 function AtlasAsset({ src, alt, ratio='16 / 10', fit='cover', fallback='Asset redo' }){
   const [failed,setFailed]=useState(!src)
