@@ -67,6 +67,21 @@ test('phase 4 primary pages render without route-level runtime errors', async ()
   }
 })
 
+test('phase 4 Home renders the deterministic ASKR Coach recommendation card', async () => {
+  const { modulePath, cleanup } = await bundle('src/AppPhase4.jsx')
+  try {
+    const { default: AppPhase4 } = await import(modulePath)
+    globalThis.localStorage = storageWith({ 'atlas-phase4': JSON.stringify({ page: 'dashboard' }) })
+    const html = renderToString(React.createElement(AppPhase4))
+    assert.match(html, /ASKR Coach · Dagens rekommendation/)
+    assert.match(html, /Starta föreslaget pass/)
+    assert.match(html, /Varför\?/)
+  } finally {
+    delete globalThis.localStorage
+    await cleanup()
+  }
+})
+
 
 test('phase 4 Recovery route renders with primary app navigation intact', async () => {
   const { modulePath, cleanup } = await bundle('src/AppPhase4.jsx')
