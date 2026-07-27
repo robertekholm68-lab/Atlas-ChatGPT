@@ -19,6 +19,16 @@ Nutrition Intelligence is a deterministic intelligence layer, not a calorie trac
 - **Coach:** structured context and reason codes allow recommendations to explain nutrition support or risk.
 - **Goal Engine:** fat loss, maintenance, muscle gain, performance, and recomposition adjust energy and macro targets.
 
-## Sprint 9 seams
+## Sprint 9 meal intelligence
 
-Provider adapters can map barcode databases, recipe builders, and AI estimates into `createMeal`. A persistent storage adapter can replace serialization at the application boundary. Dashboard cards can read `macros`, `hydration`, `score`, and `day.meals` directly without duplicating calculations.
+- `RecipeEngine` normalizes recipes, applies calorie, protein, time, cuisine, budget, diet, and allergy filters, then ranks safe matches against favorite and disliked foods.
+- `MealRecommendationEngine` calculates remaining macros, adapts carbohydrate demand after harder workouts, and supplies pre-workout, post-workout, hydration, and electrolyte guidance.
+- `MealPlannerEngine` builds a deterministic seven-day, family-sized plan from matching recipes and scheduled workouts.
+- `ShoppingEngine` consolidates the plan's ingredients and groups the resulting grocery list by category.
+- `EnergyBalanceEngine` combines intake, basal expenditure, activity, and thermic effect to expose daily balance, weekly trend, and an explicitly predicted—not measured—body-weight forecast.
+
+`buildNutritionIntelligence` composes all five engines. Recipe-backed planning remains optional, so existing logging consumers do not need recipe data. Its `coachContext` now includes energy balance, meal suggestions, nutrition gaps, and recovery actions. Engines stay deterministic and provider-independent; an AI adapter can explain or rephrase their structured output without owning nutrition calculations.
+
+## Phase 4 boundary
+
+Provider adapters can map barcode databases and AI estimates into `createMeal` or normalized recipes. Persistence can replace the existing serialization boundary without changing engine consumers. Phase 4 UI cards can read `mealPlan`, `shoppingList`, `energyBalance`, `recoverySupport`, and `coachContext` directly without duplicating calculations.
