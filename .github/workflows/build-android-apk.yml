@@ -46,19 +46,41 @@ jobs:
           java-version: '21'
 
       - name: Install SVG renderer
-        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq librsvg2-bin
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --silent
 
       - name: Run tests
-        run: npm test
+        run: npm test > /dev/null
 
       - name: Build web app
-        run: npm run build
+        run: npm run build > /dev/null
 
       - name: Create Android project
-        run: npx cap add android
+        id: cap_add
+        shell: bash
+        run: |
+          set +e
+          npx cap add android > cap-add.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload Capacitor diagnostics
+        if: steps.cap_add.outputs.exit_code != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: capacitor-add-diagnostics
+          path: cap-add.log
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Stop when Android project creation failed
+        if: steps.cap_add.outputs.exit_code != '0'
+        run: |
+          cat cap-add.log
+          exit 1
 
       - name: Generate branded icon and splash sources
         run: |
