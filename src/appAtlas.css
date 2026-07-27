@@ -134,3 +134,4 @@
 @media (prefers-reduced-motion: reduce) {
   .atlas-module-switch button { transition: none; }
 }
+.askr-briefing{display:flex;justify-content:space-between;align-items:center;gap:24px}.askr-briefing h2{margin:8px 0}.askr-briefing p{color:var(--atlas-dim);max-width:720px}.askr-briefing-actions{display:grid;gap:12px;min-width:220px}.askr-briefing-actions>span{color:var(--atlas-dim);font-size:12px;text-transform:lowercase}@media(max-width:720px){.askr-briefing{align-items:stretch;flex-direction:column}.askr-briefing-actions{min-width:0}}

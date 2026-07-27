@@ -9,6 +9,17 @@ const readinessOf = muscle => Number(muscle?.recoveryPercentage ?? muscle?.readi
 const latestType = history => [...history].sort((a, b) => new Date(b.completedAt || b.date || 0) - new Date(a.completedAt || a.date || 0))[0]?.recommendation
 
 export function makeCoachDecision(input = {}) {
+  const askrDecision = input.askr?.decisions?.[0] || input.askrDecision
+  if (askrDecision) return {
+    decision: askrDecision.category,
+    recommendation: askrDecision.recommendedAction?.type?.toLowerCase(),
+    confidence: Math.round((askrDecision.confidence?.score || 0) * 100),
+    focusMuscles: [], avoidMuscles: [], estimatedDuration: input.goalProfile?.availableTime || 30,
+    sessionIntensity: askrDecision.safetyLevel === 'normal' ? 'moderate' : 'low',
+    reasonCodes: askrDecision.reasons,
+    alternativeRecommendations: askrDecision.alternativeActions.map(action => action.type.toLowerCase()),
+    askrDecisionId: askrDecision.id,
+  }
   const history = Array.isArray(input.workoutHistory) ? input.workoutHistory : []
   const recovery = input.recovery?.muscles || input.recovery || {}
   const goal = input.goalProfile || {}
