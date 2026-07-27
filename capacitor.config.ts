@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
   appId: 'se.askr.app',
   appName: 'ASKR',
   webDir: 'dist',
-  bundledWebRuntime: false,
   android: {
     allowMixedContent: false,
     backgroundColor: '#0B0D0F'
