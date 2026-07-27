@@ -1,0 +1,301 @@
+/* Mobile layout guard for the installed Android app and PWA.
+   Keep the document at viewport width and let only intentional content regions scroll. */
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+html,
+body {
+  margin: 0;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+.atlas-product-shell,
+.p4-shell,
+.p4-main,
+.p4-top,
+.p4-grid,
+.program-dashboard,
+.program-layout,
+.exercise-layout,
+.session-layout,
+.premium-session,
+.workout-overview {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.atlas-product-shell {
+  width: 100%;
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+
+.p4-shell {
+  min-height: 100dvh;
+}
+
+@media (max-width: 760px) {
+  .atlas-product-shell {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .atlas-module-switch {
+    width: calc(100% - 16px);
+    max-width: calc(100% - 16px);
+    left: 8px;
+    right: 8px;
+    transform: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .p4-shell {
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+    display: block;
+    overflow: hidden;
+  }
+
+  .p4-sidebar {
+    display: none;
+  }
+
+  .p4-main {
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+    padding: calc(68px + env(safe-area-inset-top)) 12px calc(84px + env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .p4-top {
+    width: 100%;
+    margin: 0 0 14px;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .p4-top h1 {
+    font-size: clamp(24px, 8vw, 32px);
+    line-height: 1.05;
+  }
+
+  .p4-top p {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .p4-top > div:last-child {
+    flex: 0 0 auto;
+  }
+
+  .p4-top > div:last-child .p4-primary {
+    display: none;
+  }
+
+  .p4-grid,
+  .program-dashboard,
+  .program-layout,
+  .exercise-layout,
+  .session-layout,
+  .premium-session,
+  .workout-overview {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .p4-grid > *,
+  .program-dashboard > *,
+  .program-layout > *,
+  .exercise-layout > *,
+  .session-layout > *,
+  .premium-session > *,
+  .workout-overview > *,
+  .span3,
+  .span4,
+  .span5,
+  .span7,
+  .span8,
+  .span12 {
+    min-width: 0;
+    max-width: 100%;
+    grid-column: 1 / -1;
+  }
+
+  .panel,
+  .p4-hero,
+  .p4-kpi,
+  .atlas-card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .p4-hero,
+  .panel {
+    padding: 16px;
+  }
+
+  .p4-hero {
+    min-height: 0;
+  }
+
+  .overview-meta,
+  .premium-dashboard-meta,
+  .hero-actions,
+  .askr-coach-actions,
+  .quick-log-actions,
+  .session-nav {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .exercise-pills,
+  .session-tabs,
+  .segmented {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .exercise-pills::-webkit-scrollbar,
+  .session-tabs::-webkit-scrollbar,
+  .segmented::-webkit-scrollbar {
+    display: none;
+  }
+
+  .atlas-asset,
+  .atlas-asset img,
+  .active-exercise-visual,
+  .active-exercise-visual img {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Active workout: the shell stays fixed; the workout card is the only vertical scroller. */
+  .p4-main:has(.premium-session) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .p4-main:has(.premium-session) .p4-top {
+    display: none;
+  }
+
+  .premium-session {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .premium-session .session-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    padding: 14px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .premium-session .session-side {
+    display: none;
+  }
+
+  .premium-session-head,
+  .exercise-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .premium-session-head h2,
+  .exercise-title-row h3 {
+    font-size: clamp(22px, 7vw, 30px);
+  }
+
+  .workout-progress-strip {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workout-progress-strip .progress-track {
+    grid-column: 1 / -1;
+  }
+
+  .set-log,
+  .premium-set-log {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .set-row,
+  .set-row.premium {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: 28px minmax(48px, 1fr) minmax(48px, 1fr) minmax(52px, .8fr) 42px;
+    gap: 5px;
+  }
+
+  .set-row.head span:nth-child(5),
+  .set-row.premium > input:nth-of-type(3),
+  .set-row.premium .set-delete-button {
+    display: none;
+  }
+
+  .set-row input,
+  .set-row select {
+    min-width: 0;
+    width: 100%;
+    padding: 8px 5px;
+    font-size: 16px;
+  }
+
+  .set-row button,
+  .set-done-button {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .floating-rest-timer {
+    left: 8px;
+    right: 8px;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    width: auto;
+    max-width: none;
+    overflow-x: auto;
+  }
+}
