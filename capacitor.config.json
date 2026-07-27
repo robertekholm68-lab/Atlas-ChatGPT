@@ -1,0 +1,12 @@
+{
+  "appId": "se.askr.app",
+  "appName": "ASKR",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#0B0D0F"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
