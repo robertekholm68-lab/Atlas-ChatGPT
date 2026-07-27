@@ -13,10 +13,15 @@ import { installPhase4Bridge } from './core/phase4Bridge'
 import './appAtlas.css'
 
 const STORAGE_KEY = 'atlas-active-module-v1'
+const MODULES = new Set(['training', 'nutrition', 'recovery', 'intelligence', 'production'])
+
+export function normalizeModule(value) {
+  return MODULES.has(value) ? value : 'training'
+}
 
 function loadModule() {
   try {
-    return localStorage.getItem(STORAGE_KEY) || 'training'
+    return normalizeModule(localStorage.getItem(STORAGE_KEY))
   } catch {
     return 'training'
   }
@@ -49,15 +54,17 @@ export default function AppAtlas() {
   }, [])
 
   function changeModule(nextModule) {
-    setModule(nextModule)
+    const normalizedModule = normalizeModule(nextModule)
+    setModule(normalizedModule)
     try {
-      localStorage.setItem(STORAGE_KEY, nextModule)
+      localStorage.setItem(STORAGE_KEY, normalizedModule)
     } catch {
       // Appen fungerar även när webbläsaren blockerar lokal lagring.
     }
   }
 
-  const recovery = core.recovery?.score ?? 100
+  const hasRecoveryData = Boolean(core.recovery?.updatedAt)
+  const recovery = hasRecoveryData ? `${core.recovery.score}%` : '–'
   const currentDecision = core.decisions?.current
 
   return (
@@ -70,7 +77,7 @@ export default function AppAtlas() {
           onClick={() => changeModule('training')}
           aria-current={module === 'training' ? 'page' : undefined}
         >
-          <Dumbbell size={18} />
+          <Dumbbell size={18} aria-hidden="true" />
           <span>Träning</span>
         </button>
         <button
@@ -79,7 +86,7 @@ export default function AppAtlas() {
           onClick={() => changeModule('nutrition')}
           aria-current={module === 'nutrition' ? 'page' : undefined}
         >
-          <Apple size={18} />
+          <Apple size={18} aria-hidden="true" />
           <span>Kost</span>
         </button>
         <button
@@ -88,7 +95,7 @@ export default function AppAtlas() {
           onClick={() => changeModule('recovery')}
           aria-current={module === 'recovery' ? 'page' : undefined}
         >
-          <BatteryCharging size={18} />
+          <BatteryCharging size={18} aria-hidden="true" />
           <span>Recovery</span>
         </button>
         <button
@@ -97,7 +104,7 @@ export default function AppAtlas() {
           onClick={() => changeModule('intelligence')}
           aria-current={module === 'intelligence' ? 'page' : undefined}
         >
-          <Bot size={18} />
+          <Bot size={18} aria-hidden="true" />
           <span>Coach</span>
         </button>
         <button
@@ -106,12 +113,12 @@ export default function AppAtlas() {
           onClick={() => changeModule('production')}
           aria-current={module === 'production' ? 'page' : undefined}
         >
-          <Cloud size={18} />
+          <Cloud size={18} aria-hidden="true" />
           <span>Cloud</span>
         </button>
         <span className="atlas-core-status" title={currentDecision?.title || 'Beräknas lokalt från genomförda set och RPE'}>
-          <HeartPulse size={16} />
-          Återhämtning {recovery}%
+          <HeartPulse size={16} aria-hidden="true" />
+          Återhämtning {recovery}
         </span>
         {devToolsEnabled && <button
           type="button"
@@ -120,7 +127,7 @@ export default function AppAtlas() {
           title="Öppna intern ATLAS-diagnostik"
           aria-pressed={showDevPanel}
         >
-          <Bug size={17}/>
+          <Bug size={17} aria-hidden="true"/>
           <span>Core</span>
         </button>}
       </nav>

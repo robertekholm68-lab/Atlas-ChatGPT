@@ -23,3 +23,11 @@ test('offline shell supports navigation fallback and cache upgrades', async () =
   assert.match(worker, /caches\.match\('\/index\.html'\)/)
   assert.match(worker, /key !== CACHE_NAME/)
 })
+
+test('production shell recovers from invalid persisted navigation and avoids fabricated recovery', async () => {
+  const shell = await read('src/AppAtlas.jsx')
+
+  assert.match(shell, /MODULES\.has\(value\) \? value : 'training'/)
+  assert.match(shell, /Boolean\(core\.recovery\?\.updatedAt\)/)
+  assert.match(shell, /hasRecoveryData \? `\$\{core\.recovery\.score\}%` : '–'/)
+})
