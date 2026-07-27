@@ -1,8 +1,23 @@
-const CACHE_NAME = 'askr-shell-v1'
+const CACHE_NAME = 'askr-shell-v2'
 const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/assets/branding/logos/askr-symbol-metal.png']
 
+async function cacheAppShell() {
+  const cache = await caches.open(CACHE_NAME)
+  const indexResponse = await fetch('/index.html')
+
+  if (!indexResponse.ok) throw new Error('ASKR app shell could not be downloaded')
+
+  const html = await indexResponse.clone().text()
+  const assetUrls = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
+    .map(([, url]) => url)
+    .filter(url => url.startsWith('/') && !APP_SHELL.includes(url))
+
+  await cache.put('/index.html', indexResponse)
+  await cache.addAll([...new Set([...APP_SHELL.filter(url => url !== '/index.html'), ...assetUrls])])
+}
+
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)))
+  event.waitUntil(cacheAppShell())
   self.skipWaiting()
 })
 

@@ -19,6 +19,9 @@ test('PWA metadata uses the ASKR identity and approved Ink theme', async () => {
 test('offline shell supports navigation fallback and cache upgrades', async () => {
   const worker = await read('public/service-worker.js')
 
+  assert.match(worker, /indexResponse\.clone\(\)\.text\(\)/)
+  assert.match(worker, /html\.matchAll/)
+  assert.match(worker, /cache\.addAll/)
   assert.match(worker, /request\.mode === 'navigate'/)
   assert.match(worker, /caches\.match\('\/index\.html'\)/)
   assert.match(worker, /key !== CACHE_NAME/)
