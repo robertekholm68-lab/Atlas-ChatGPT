@@ -30,6 +30,8 @@ export function readinessState(score) {
 }
 
 export function buildRecoveryPlatformModel(core = {}) {
+  const intelligence = core.recoveryIntelligence
+  const intelligenceSnapshot = intelligence?.snapshot
   const coreMuscles = core.recovery?.muscles || {}
   const muscles = DEFAULT_MUSCLES.map(([id, name, view, fallbackScore, fallbackFatigue, exercises]) => {
     const coreEntry = coreMuscles[name] || coreMuscles[id]
@@ -46,7 +48,7 @@ export function buildRecoveryPlatformModel(core = {}) {
       notes: coreEntry ? 'Connected to completed workout recovery engine.' : 'Placeholder until enough training history exists.'
     }
   })
-  const score = Math.round(clamp(core.recovery?.score ?? muscles.reduce((sum, muscle) => sum + muscle.score, 0) / muscles.length))
+  const score = Math.round(clamp(intelligenceSnapshot?.recoveryScore ?? core.recovery?.score ?? muscles.reduce((sum, muscle) => sum + muscle.score, 0) / muscles.length))
   const limiting = [...muscles].sort((a, b) => a.score - b.score).slice(0, 3)
   const workouts = core.workouts || []
   const reasons = [
@@ -79,6 +81,17 @@ export function buildRecoveryPlatformModel(core = {}) {
       heart: ['Resting HR', 'HRV', 'Heart rate recovery', 'Stress', 'Body Battery', 'Garmin', 'Apple Health', 'Google Fit'],
       ai: ['Training suggestions', 'Rest suggestions', 'Nutrition suggestions', 'Sleep suggestions', 'Hydration suggestions'],
       notifications: ['Legs recovered', 'Chest still fatigued', 'Drink more water', 'Protein target missed', 'Recovery improving', 'Ready for heavy workout']
-    }
+    },
+    intelligence: intelligence ? {
+      recoveryScore: score,
+      readiness: intelligenceSnapshot.readiness,
+      recoveryTrend: intelligence.forecast?.trend,
+      sleep: intelligence.sleep,
+      hrvTrend: core.hrvTrend || 'stable',
+      stress: intelligence.stress,
+      nextRecommendedWorkout: intelligenceSnapshot.recommendation,
+      forecast: intelligence.forecast,
+      insights: intelligence.insights,
+    } : null,
   }
 }
