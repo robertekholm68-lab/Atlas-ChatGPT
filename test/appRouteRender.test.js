@@ -67,6 +67,22 @@ test('phase 4 primary pages render without route-level runtime errors', async ()
   }
 })
 
+test('progress screen renders every progress intelligence section in empty and demo mode', async () => {
+  const { modulePath, cleanup } = await bundle('src/AppPhase4.jsx')
+  try {
+    const { default: AppPhase4 } = await import(modulePath)
+    for (const history of [[], [{ id: 1, date: '2026-07-20', name: 'Demo', sets: 12, volume: 6000, duration: 45 }]]) {
+      globalThis.localStorage = storageWith({ 'atlas-phase4': JSON.stringify({ page: 'progress', history }) })
+      const html = renderToString(React.createElement(AppPhase4))
+      for (const label of ['Today.*Improvements', 'Recent PRs', 'Weekly Trend', 'Monthly Trend', 'Most Improved Muscles', 'Most Consistent Muscles', 'Strength Trend', 'Recovery Trend', 'Coach Summary']) assert.match(html, new RegExp(label))
+      assert.doesNotMatch(html, /undefined|null|NaN/)
+    }
+  } finally {
+    delete globalThis.localStorage
+    await cleanup()
+  }
+})
+
 test('phase 4 Home renders the deterministic ASKR Coach recommendation card', async () => {
   const { modulePath, cleanup } = await bundle('src/AppPhase4.jsx')
   try {
