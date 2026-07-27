@@ -2,7 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   NutritionStorage, addMeal, buildNutritionIntelligence, calculateDailyTarget, calculateMacros,
-  calculateNutritionScore, createNutritionDay, evaluateMealTiming, nutritionMockProfiles,
+  calculateEnergyBalance, calculateNutritionScore, createNutritionDay, createShoppingList,
+  evaluateMealTiming, filterRecipes, nutritionMockProfiles, planMealWeek, recommendMeals,
 } from '../src/engines/nutrition/index.js'
 import { buildRecoverySnapshot } from '../src/engines/recovery/RecoveryIntelligenceEngine.js'
 import { makeCoachDecision } from '../src/engines/CoachDecisionEngine.js'
@@ -15,6 +16,37 @@ test('MacroEngine totals nutrients and derives calorie distribution without muta
   assert.equal(result.protein, 50)
   assert.equal(result.distribution.protein, 37.4)
   assert.equal(JSON.stringify(meals), before)
+})
+
+const recipes = [{ id: 'bowl', name: 'Chicken rice bowl', calories: 620, protein: 48, carbs: 70, fat: 16, prepTime: 25, cost: 6, cuisine: 'asian', diet: ['gluten-free'], servings: 2, ingredients: [{ name: 'Chicken', amount: 400, unit: 'g', category: 'protein' }, { name: 'Rice', amount: 200, unit: 'g', category: 'pantry' }] }, { id: 'pasta', name: 'Peanut pasta', calories: 760, protein: 30, prepTime: 40, cost: 8, allergens: ['peanut'] }]
+
+test('RecipeEngine filters dietary, time, budget, protein, cuisine, and allergy constraints', () => {
+  assert.deepEqual(filterRecipes(recipes, { minProtein: 40, maxPrepTime: 30, maxBudget: 7, cuisine: 'asian', diet: 'gluten-free', allergies: ['peanut'] }).map(recipe => recipe.id), ['bowl'])
+  assert.equal(recommendMeals({ recipes, preferences: { allergies: ['peanut'], favoriteFoods: ['chicken'] }, targets: { protein: 150 }, macros: { protein: 90 } })[0].recipe.id, 'bowl')
+})
+
+test('MealPlanner and Shopping engines create a family-aware grouped weekly plan', () => {
+  const plan = planMealWeek({ recipes: [recipes[0]], preferences: { familySize: 4 }, startDate: '2026-07-27' })
+  const shopping = createShoppingList(plan)
+  assert.equal(plan.days.length, 7)
+  assert.equal(plan.days[0].date, '2026-07-27')
+  assert.equal(shopping.categories.protein[0].amount, 16800)
+  assert.equal(shopping.generatedFromDays, 7)
+})
+
+test('EnergyBalance predicts weekly balance and body-weight direction', () => {
+  const energy = calculateEnergyBalance({ caloriesIn: 2200, basalCalories: 1800, activeCalories: 500, currentWeightKg: 80, history: Array(6).fill({ balance: -300 }) })
+  assert.equal(energy.caloriesOut, 2520)
+  assert.equal(energy.predictedBalance, -320)
+  assert.ok(energy.bodyWeightForecastKg < 80)
+})
+
+test('NutritionEngine composes meal planning, shopping, recovery and coach updates', () => {
+  const result = buildNutritionIntelligence({ day: nutritionMockProfiles.athlete, recipes, preferences: { allergies: ['peanut'], familySize: 2 }, workout: { day: 'monday', durationMinutes: 75, activeCalories: 600 }, profile: { weightKg: 80, basalCalories: 1800 } })
+  assert.equal(result.mealPlan.days.length, 7)
+  assert.ok(result.shoppingList.items.length)
+  assert.equal(result.recoverySupport.electrolytes.recommended, true)
+  assert.deepEqual(result.coachContext.mealRecommendations, ['Chicken rice bowl'])
 })
 
 test('NutritionScore produces a bounded, explainable 0–100 score', () => {
