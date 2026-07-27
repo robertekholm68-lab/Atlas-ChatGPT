@@ -25,6 +25,7 @@ export function AtlasBottomNavigation({ page, setPage }) { return <nav className
 
 export function AtlasHomeScreen({ profile, core, recommendation, readiness, setPage, now }) {
   const vm = buildHomeViewModel({ profile, core, recommendation, readiness, now })
+  const briefing = recommendation.askrBriefing
   const go = target => setPage(safeHomeTarget(target, 'today'))
   return <div className="atlas-home-page">
     <header className="atlas-home-header"><div className="atlas-home-brand"><img src="/assets/branding/logos/askr-wordmark-horizontal.png" alt="ASKR"/></div><div className="atlas-header-status"><span>{vm.greeting}</span><button type="button" className="atlas-avatar-button" aria-label="Öppna profil"><UserRound size={19}/></button></div></header>
@@ -33,6 +34,8 @@ export function AtlasHomeScreen({ profile, core, recommendation, readiness, setP
       <div className="atlas-hero-copy"><span className="atlas-kicker">Dagens beslut</span><h1>{vm.headline}</h1><p>{vm.explanation}</p><div className="atlas-confidence"><TrendingUp size={16}/>{vm.confidence}</div><div className="atlas-actions"><AtlasPrimaryButton onClick={() => go(vm.primaryTarget)}><Zap size={18}/>{vm.primaryLabel}</AtlasPrimaryButton>{vm.secondary && <AtlasSecondaryButton onClick={() => go(vm.secondary.target)}>{vm.secondary.label}<ArrowRight size={17}/></AtlasSecondaryButton>}</div></div>
       <aside className="atlas-hero-panel"><ReadinessDial value={vm.recoveryScore} hasData={vm.hasRecoveryData}/><span>Redo</span><strong>{vm.hasRecoveryData ? vm.status : 'Ingen återhämtningsdata loggad ännu.'}</strong></aside>
     </section>
+
+    {briefing && <AtlasCard className="askr-briefing" aria-label="ASKR daglig briefing"><div><span className="atlas-kicker">ASKR briefing</span><h2>{briefing.primaryFocus}</h2><p>{briefing.explanation}</p><small>{briefing.confidence?.category || 'begränsad'} säkerhet</small>{briefing.warnings?.[0] && <p role="alert">Undvik: {briefing.warnings[0]}</p>}</div><div className="askr-briefing-actions">{briefing.topActions.slice(0, 3).map((action, index) => index === 0 ? <AtlasPrimaryButton key={action.id} onClick={() => go('coach')}>{action.type.replaceAll('_', ' ')}</AtlasPrimaryButton> : <span key={action.id}>{action.type.replaceAll('_', ' ')}</span>)}</div></AtlasCard>}
 
     <section className="atlas-metric-grid" aria-label="Dagens statistik">{vm.metrics.length ? vm.metrics.map(metric => { const Icon = metric.icon || metricIcons[metric.id] || Activity; return <article className="atlas-metric" key={metric.id}><div><Icon size={18}/><span>{metric.label}</span></div><strong>{metric.value}</strong><small>{metric.note}</small></article> }) : <AtlasCard className="atlas-empty-card"><p>Ingen dagsstatistik loggad ännu.</p></AtlasCard>}</section>
 
