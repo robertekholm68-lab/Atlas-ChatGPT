@@ -22,11 +22,12 @@ export function buildRecoverySnapshot(input = {}) {
   const trainingLoad = calculateTrainingLoad(input.workoutHistory, input.timestamp)
   const muscleRecovery = enhanceMuscles(evaluateMuscleRecovery(input.muscles, input.timestamp), input.previousMuscleRecovery)
   const fatigue = calculateFatigue({ ...input, sleepScore: sleep.score, stressIndex: stress.index, muscleRecovery })
-  const score = calculateRecoveryScore({ ...input, sleepScore: sleep.score, stressIndex: stress.index, trainingLoadScore: trainingLoad.score, muscleFatigue: fatigue.overall })
+  const nutritionScore = input.nutrition?.score?.score ?? input.nutrition?.score
+  const score = calculateRecoveryScore({ ...input, nutritionScore, sleepScore: sleep.score, stressIndex: stress.index, trainingLoadScore: trainingLoad.score, muscleFatigue: fatigue.overall })
   const forecast = forecastReadiness({ recoveryScore: score.score, muscleRecovery, sleepTrend: sleep.trend, stressTrend: stress.trend, loadStatus: trainingLoad.status })
   const recommendation = score.score >= 80 ? 'Heavy day approved' : score.score >= 60 ? forecast.today.recommendation : score.score >= 40 ? 'Reduce sets and intensity' : 'Recovery day: walking and mobility'
   const snapshot = createRecoverySnapshot({ ...input, recoveryScore: score.score, sleepScore: sleep.score, sleepDebt: sleep.sleepDebt, stress, fatigue, trainingLoad, muscleRecovery, readiness: score.score >= 75 ? 'ready' : score.score >= 50 ? 'limited' : 'recover', recommendation, confidence: score.confidence })
-  return immutable({ snapshot, sleep, stress, trainingLoad, fatigue, score, forecast, insights: generateRecoveryInsights({ sleep, stress, trainingLoad, muscleRecovery, hrvTrend: input.hrvTrend }), notificationCandidates: createRecoveryNotificationCandidates(score.score, trainingLoad.status) })
+  return immutable({ snapshot, sleep, stress, trainingLoad, fatigue, nutrition: input.nutrition?.recoverySignals ?? null, score, forecast, insights: generateRecoveryInsights({ sleep, stress, trainingLoad, muscleRecovery, hrvTrend: input.hrvTrend }), notificationCandidates: createRecoveryNotificationCandidates(score.score, trainingLoad.status) })
 }
 
 export const createRecoveryIntelligence = buildRecoverySnapshot
