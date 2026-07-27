@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import AppAtlas from './AppAtlas'
 import AppErrorBoundary from './AppErrorBoundary'
 import './styles.css'
+import './workout-mobile-fix.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
