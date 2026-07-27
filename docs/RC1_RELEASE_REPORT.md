@@ -37,6 +37,7 @@ The global module switch was reviewed at desktop and compact mobile breakpoints 
 - A top-level error boundary prevents a render failure from leaving a blank application and offers a safe reload path.
 - Corrupt optional legacy state remains isolated by existing guarded persistence parsing.
 - Offline state is communicated in text, not color alone, while local workflows remain available.
+- Invalid persisted module navigation now falls back to Training instead of rendering an empty shell, and recovery status remains explicitly unavailable until real recovery data has been calculated.
 - The manifest defines standalone presentation, ASKR identity, Ink theme/background, and an any/maskable square brand icon.
 - The service worker pre-caches the shell, removes superseded caches, falls back to the shell for offline navigation/deep links, and runtime-caches successful same-origin assets.
 - Hosting still must provide SPA fallback rewrites to `index.html`; this cannot be made provider-specific without a selected deployment target.
@@ -46,7 +47,7 @@ The global module switch was reviewed at desktop and compact mobile breakpoints 
 - Product copy still contains legacy `ATLAS` naming in some historical feature surfaces and storage keys. A wholesale rename was intentionally avoided because it would enlarge risk and could break persisted data compatibility.
 - The visual audit in `UI_AUDIT.md` identifies legacy styles that predate the current ASKR design rules. Consolidating them requires screen-by-screen visual regression approval rather than a risky release-candidate rewrite.
 - Several demo histories and dated sample records remain visible by design in alpha builds.
-- No lint or standalone type-check command exists in `package.json`; build and 108 automated tests are the available repository-wide gates.
+- No lint or standalone type-check command exists in `package.json`; build and 109 automated tests are the available repository-wide gates.
 
 ## Known limitations
 
