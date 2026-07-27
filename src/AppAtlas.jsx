@@ -6,6 +6,7 @@ import AtlasDevPanel from './AtlasDevPanel'
 import NutritionPlatform from './NutritionPlatform'
 import RecoveryPlatform from './RecoveryPlatform'
 import ProductionPlatform from './platform/ProductionPlatform'
+import ConnectivityStatus from './ConnectivityStatus'
 import { getAtlasState, subscribeAtlas } from './core/atlasStore'
 import { recordCompletedWorkout } from './core/eventEngine'
 import { installPhase4Bridge } from './core/phase4Bridge'
@@ -61,11 +62,13 @@ export default function AppAtlas() {
 
   return (
     <div className="atlas-product-shell">
-      <div className="atlas-module-switch" aria-label="Välj ATLAS-modul">
+      <ConnectivityStatus />
+      <nav className="atlas-module-switch" aria-label="Välj ASKR-modul">
         <button
           type="button"
           className={module === 'training' ? 'active' : ''}
           onClick={() => changeModule('training')}
+          aria-current={module === 'training' ? 'page' : undefined}
         >
           <Dumbbell size={18} />
           <span>Träning</span>
@@ -74,6 +77,7 @@ export default function AppAtlas() {
           type="button"
           className={module === 'nutrition' ? 'active' : ''}
           onClick={() => changeModule('nutrition')}
+          aria-current={module === 'nutrition' ? 'page' : undefined}
         >
           <Apple size={18} />
           <span>Kost</span>
@@ -82,6 +86,7 @@ export default function AppAtlas() {
           type="button"
           className={module === 'recovery' ? 'active' : ''}
           onClick={() => changeModule('recovery')}
+          aria-current={module === 'recovery' ? 'page' : undefined}
         >
           <BatteryCharging size={18} />
           <span>Recovery</span>
@@ -90,6 +95,7 @@ export default function AppAtlas() {
           type="button"
           className={module === 'intelligence' ? 'active' : ''}
           onClick={() => changeModule('intelligence')}
+          aria-current={module === 'intelligence' ? 'page' : undefined}
         >
           <Bot size={18} />
           <span>Coach</span>
@@ -98,6 +104,7 @@ export default function AppAtlas() {
           type="button"
           className={module === 'production' ? 'active' : ''}
           onClick={() => changeModule('production')}
+          aria-current={module === 'production' ? 'page' : undefined}
         >
           <Cloud size={18} />
           <span>Cloud</span>
@@ -116,7 +123,7 @@ export default function AppAtlas() {
           <Bug size={17}/>
           <span>Core</span>
         </button>}
-      </div>
+      </nav>
 
       {module === 'training' && <AppPhase4 />}
       {module === 'nutrition' && <NutritionPlatform />}
