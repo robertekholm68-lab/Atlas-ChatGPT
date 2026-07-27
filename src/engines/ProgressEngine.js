@@ -135,7 +135,15 @@ export function calculateProgress(workoutHistory = [], currentWorkout = null, ex
   const recoverySeries = Array.isArray(options.recoveryHistory) ? options.recoveryHistory.map(item => number(item.score ?? item)) : []
   const consistencyResult = consistency(allWorkouts, allRows, now)
   const muscleProgress = Object.entries(muscleHistory || {}).map(([muscleId, value]) => ({ muscleId, consistencyScore: number(value.consistencyScore ?? value.trainingFrequency), progressTrend: value.trend || detectTrend(value.strengthHistory || []), volumeTrend: value.volumeTrend || value.trend || detectTrend(value.volumeHistory || []), strengthTrend: value.strengthTrend || detectTrend(value.strengthHistory || []), recentPRs: prs.filter(pr => (value.exerciseIds || []).includes(pr.exerciseId)), bestExercise: value.favoriteExercise?.bestPerforming || value.bestExercise || null, weakestExercise: value.weakestExercise || null }))
-  return { generatedAt: now.toISOString(), records: { weightPRs: prs.filter(pr => pr.type === 'weight'), repPRs: prs.filter(pr => pr.type === 'reps'), volumePRs: prs.filter(pr => pr.type === 'volume'), estimated1RMPRs: prs.filter(pr => pr.type === 'estimated1RM'), weeklyVolumeRecord: weekly.best, monthlyVolumeRecord: monthly.best, personalRecords }, prs, consistency: consistencyResult, trends: { volume: detectTrend(weekly.series.map(item => item.volume)), strength: detectTrend(strengthSeries), consistency: detectTrend(frequencySeries), recovery: detectTrend(recoverySeries), frequency: detectTrend(frequencySeries) }, history: { weekly: weekly.series, monthly: monthly.series }, muscles: muscleProgress }
+  const healthSnapshots = Array.isArray(options.healthSnapshots) ? options.healthSnapshots : []
+  const healthIntelligence = options.healthIntelligence || {}
+  const healthProgress = {
+    weight: detectTrend(healthSnapshots.map(item => item.bodyWeight).filter(value => value != null)),
+    bodyFat: detectTrend(healthSnapshots.map(item => item.bodyFat).filter(value => value != null)),
+    healthScore: healthIntelligence.healthScore ?? null,
+    readinessTrend: healthIntelligence.trends?.periods?.['7Day'] ?? null,
+  }
+  return { generatedAt: now.toISOString(), records: { weightPRs: prs.filter(pr => pr.type === 'weight'), repPRs: prs.filter(pr => pr.type === 'reps'), volumePRs: prs.filter(pr => pr.type === 'volume'), estimated1RMPRs: prs.filter(pr => pr.type === 'estimated1RM'), weeklyVolumeRecord: weekly.best, monthlyVolumeRecord: monthly.best, personalRecords }, prs, consistency: consistencyResult, trends: { volume: detectTrend(weekly.series.map(item => item.volume)), strength: detectTrend(strengthSeries), consistency: detectTrend(frequencySeries), recovery: detectTrend(recoverySeries), frequency: detectTrend(frequencySeries) }, history: { weekly: weekly.series, monthly: monthly.series }, muscles: muscleProgress, health: healthProgress }
 }
 
 function mergeRecord(historical, current) {

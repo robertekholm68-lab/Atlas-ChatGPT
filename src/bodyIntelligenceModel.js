@@ -34,12 +34,12 @@ export function sortVolumeSummary(muscles, sort = 'highest') {
     : sort === 'lowest' ? left.effectiveSets - right.effectiveSets : right.effectiveSets - left.effectiveSets)
 }
 
-export function buildBodyDashboardModel({ workouts = [], liveSession = null, exerciseLibrary = [], goal = {}, now = new Date(), trainingStreak = 0, restDays = 0 } = {}) {
+export function buildBodyDashboardModel({ workouts = [], liveSession = null, exerciseLibrary = [], goal = {}, now = new Date(), trainingStreak = 0, restDays = 0, healthIntelligence = null } = {}) {
   const sessions = normalizeSessions(workouts, liveSession)
   const intelligence = buildMuscleIntelligence(sessions, exerciseLibrary, now)
   const recovery = buildRecoveryIntelligence(intelligence, now)
   const goalProfile = buildGoalProfile(goal)
-  const coach = makeCoachDecision({ session: liveSession, workoutHistory: workouts, muscleIntelligence: intelligence, recovery, goalProfile })
+  const coach = makeCoachDecision({ session: liveSession, workoutHistory: workouts, muscleIntelligence: intelligence, recovery, goalProfile, healthIntelligence })
   const muscles = Object.entries(bodyMuscles).map(([id, meta]) => {
     const facts = intelligence[id] || {}
     const localRecovery = recovery.muscles[id] || { recoveryPercentage: 100, status: 'recovered', recommendedWait: 0 }
@@ -65,6 +65,7 @@ export function buildBodyDashboardModel({ workouts = [], liveSession = null, exe
     focus: coach.decision === 'recovery' ? 'Återhämtningsdag' : focusNames.join(' + ') || recommendationLabels[coach.recommendation] || 'Återhämtningsdag',
     focusMuscles: coach.focusMuscles,
     recovery: { readiness: recovery.overallReadiness, recoveryScore: recovery.overallReadiness, fatigueScore, intensity: intensityLabels[coach.sessionIntensity] || coach.sessionIntensity, duration: coach.estimatedDuration, trainingStreak, restDays },
+    health: healthIntelligence ? { status: healthIntelligence.healthScore, readiness: healthIntelligence.readiness, recovery: recovery.overallReadiness } : null,
     coach: { ...coach, message: buildCoachMessage(muscles, coach), explanation: explainCoachDecision(coach, 'sv') },
     volume: { highest: sortVolumeSummary(muscles, 'highest').slice(0, 3), lowest: sortVolumeSummary(muscles, 'lowest').slice(0, 3), balanced: muscles.filter(muscle => muscle.trainingZone === 'productive') },
     hasHistory: sessions.some(session => session.exercises?.some(exercise => exercise.sets?.length)),

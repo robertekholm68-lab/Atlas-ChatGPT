@@ -13,7 +13,9 @@ export function makeCoachDecision(input = {}) {
   const recovery = input.recovery?.muscles || input.recovery || {}
   const goal = input.goalProfile || {}
   const entries = Object.entries(recovery).filter(([, value]) => Number.isFinite(readinessOf(value)))
-  if (!input.session && !history.length && !entries.length) return {
+  const physiological = input.healthIntelligence || input.health || {}
+  const hasPhysiologicalData = physiological.latest || Number.isFinite(Number(physiological.readiness?.score ?? physiological.readiness)) || Number.isFinite(Number(physiological.healthScore?.score ?? physiological.healthScore))
+  if (!input.session && !history.length && !entries.length && !hasPhysiologicalData) return {
     decision: 'insufficient_data', recommendation: 'recovery', confidence: 0, focusMuscles: [], avoidMuscles: [], estimatedDuration: goal.availableTime || 30,
     sessionIntensity: 'low', reasonCodes: ['INSUFFICIENT_TRAINING_DATA'], alternativeRecommendations: [],
   }
@@ -23,7 +25,13 @@ export function makeCoachDecision(input = {}) {
   const suppliedOverall = Number(input.recovery?.overallReadiness)
   const overall = Number.isFinite(suppliedOverall) ? suppliedOverall : entries.length ? entries.reduce((sum, [, value]) => sum + readinessOf(value), 0) / entries.length : null
   const overMrv = Object.values(input.muscleIntelligence || {}).some(muscle => muscle.trainingZone === 'above-mrv' || muscle.uiStatus === 'recovery_warning')
-  let decision = overMrv ? 'deload' : overall !== null && overall < 40 ? 'recovery' : overall !== null && overall < 65 ? 'train_light' : 'train'
+  const readinessScore = Number(physiological.readiness?.score ?? physiological.readiness)
+  const snapshot = physiological.latest || input.healthSnapshot || {}
+  const healthScore = Number(physiological.healthScore?.score ?? physiological.healthScore)
+  const physiologicalRisk = Number.isFinite(readinessScore) && readinessScore < 50
+    || Number(snapshot.stressScore) >= 80
+    || Number(snapshot.sleepScore) < 45
+  let decision = overMrv ? 'deload' : physiologicalRisk || overall !== null && overall < 40 ? 'recovery' : Number.isFinite(readinessScore) && readinessScore < 70 || overall !== null && overall < 65 ? 'train_light' : 'train'
   let recommendation = decision === 'recovery' ? 'recovery' : 'full_body'
   const preferred = goal.preferredSplit
   const candidates = Object.entries(GROUPS).map(([type, muscles]) => ({ type, score: muscles.reduce((sum, id) => sum + (Number.isFinite(readinessOf(recovery[id])) ? readinessOf(recovery[id]) : 65) + (goal.priorityMultipliers?.[id] ? 8 : 0) - (avoidMuscles.includes(id) ? 100 : 0), 0) / muscles.length }))
@@ -33,8 +41,9 @@ export function makeCoachDecision(input = {}) {
   if (decision === 'deload') recommendation = candidates[0]?.type || 'full_body'
   const focusMuscles = (recommendation === 'priority_muscles' ? goal.priorityMuscles : GROUPS[recommendation] || readyMuscles).filter(id => !avoidMuscles.includes(id)).slice(0, 4)
   const confidence = clamp(45 + entries.length * 5 + (overall === null ? 0 : Math.abs(overall - 55) / 2))
-  const reasonCodes = [overMrv ? 'VOLUME_ABOVE_MRV' : null, overall === null ? 'WORKOUT_HISTORY_ROTATION' : overall < 40 ? 'LOW_OVERALL_READINESS' : overall < 65 ? 'MODERATE_READINESS' : 'HIGH_READINESS', avoidMuscles.length ? 'LOCAL_RECOVERY_RESTRICTION' : null, goal.priorityMuscles?.some(id => focusMuscles.includes(id)) ? 'GOAL_PRIORITY_MATCH' : null].filter(Boolean)
-  return { decision, recommendation, confidence, focusMuscles, avoidMuscles, estimatedDuration: Math.min(goal.availableTime || 45, decision === 'train_light' || decision === 'deload' ? 35 : 60), sessionIntensity: decision === 'train' ? goal.intensityTarget?.level || 'moderate' : 'low', reasonCodes, alternativeRecommendations: candidates.filter(item => item.type !== recommendation).slice(0, 2).map(item => item.type) }
+  const healthAction = decision === 'recovery' ? Number(snapshot.steps) < 5000 ? 'walking' : 'mobility' : decision === 'train_light' ? 'reduce_volume' : Number.isFinite(readinessScore) && readinessScore >= 85 && healthScore >= 80 ? 'increase_intensity' : 'maintain'
+  const reasonCodes = [overMrv ? 'VOLUME_ABOVE_MRV' : null, physiologicalRisk ? 'PHYSIOLOGICAL_RECOVERY_NEEDED' : null, Number.isFinite(readinessScore) ? `HEALTH_READINESS_${String(physiological.readiness?.status || readinessScore).toUpperCase()}` : null, overall === null ? 'WORKOUT_HISTORY_ROTATION' : overall < 40 ? 'LOW_OVERALL_READINESS' : overall < 65 ? 'MODERATE_READINESS' : 'HIGH_READINESS', avoidMuscles.length ? 'LOCAL_RECOVERY_RESTRICTION' : null, goal.priorityMuscles?.some(id => focusMuscles.includes(id)) ? 'GOAL_PRIORITY_MATCH' : null].filter(Boolean)
+  return { decision, recommendation, confidence, focusMuscles, avoidMuscles, estimatedDuration: Math.min(goal.availableTime || 45, decision === 'train_light' || decision === 'deload' ? 35 : 60), sessionIntensity: decision === 'train' ? goal.intensityTarget?.level || 'moderate' : 'low', healthAction, reasonCodes, alternativeRecommendations: candidates.filter(item => item.type !== recommendation).slice(0, 2).map(item => item.type) }
 }
 
 export const decideCoachRecommendation = makeCoachDecision
