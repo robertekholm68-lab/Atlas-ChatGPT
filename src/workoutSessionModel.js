@@ -160,7 +160,8 @@ export function workoutSummary(session, now = Date.now()) {
     sets: sets.length,
     volume: Math.round(sets.reduce((sum, set) => sum + set.kg * set.reps, 0)),
     duration: Math.max(1, Math.round((now - session.startedAt) / 60000)),
-    completedAt: new Date(now).toISOString()
+    completedAt: new Date(now).toISOString(),
+    exercises: session.exercises.map(exercise => ({ ...exercise, sets: exercise.sets.filter(set => set.done).map(set => ({ ...set })) }))
   }
 }
 

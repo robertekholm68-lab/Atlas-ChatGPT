@@ -1,4 +1,4 @@
-import { buildMuscleIntelligence, buildRecoveryIntelligence, buildGoalProfile, makeCoachDecision } from './engines/index.js'
+import { buildMuscleHistory, buildMuscleIntelligence, buildRecoveryIntelligence, buildGoalProfile, explainCoachDecision, makeCoachDecision } from './engines/index.js'
 import { muscleThresholds } from './engines/muscleThresholds.js'
 
 export const bodyMuscles = Object.freeze({
@@ -47,14 +47,15 @@ export function buildBodyDashboardModel({ workouts = [], liveSession = null, exe
     const priority = (goalProfile.priorityMuscles || []).includes(id) || (facts.effectiveSets || 0) < thresholds.mev
     const status = priority && localRecovery.recoveryPercentage >= 70 ? 'priority' : localRecovery.status === 'recovered' ? 'ready' : localRecovery.status
     const recentExercises = exerciseLibrary.filter(exercise => [...(exercise.primary || []), ...(exercise.secondary || [])].includes(id))
+    const history = buildMuscleHistory(sessions, exerciseLibrary, id, { now })
     return {
-      id, ...meta, ...facts, ...localRecovery, status, thresholds,
+      id, ...meta, ...facts, ...localRecovery, status, thresholds, history,
       setsRemaining: Math.max(0, thresholds.mav - Math.round(facts.effectiveSets || 0)),
       lastTrainedLabel: formatRelative(facts.lastTrained, now),
       fullRecoveryLabel: localRecovery.recommendedWait ? `Om ${localRecovery.recommendedWait} timmar` : 'Återhämtad',
       coachRecommendation: status === 'fatigued' ? 'Vila området idag.' : status === 'recovering' ? 'Sänk volym och intensitet.' : priority ? `Prioritera ${Math.max(1, thresholds.mev - Math.round(facts.effectiveSets || 0))} set.` : 'Kan tränas normalt.',
-      recentExercises: recentExercises.slice(0, 3).map(exercise => exercise.name),
-      equipment: [...new Set(recentExercises.map(exercise => exercise.equipment))].slice(0, 2).join(' · ') || 'Ingen data',
+      recentExercises: history.recentExercises.length ? history.recentExercises.map(exercise => exercise.name) : recentExercises.slice(0, 3).map(exercise => exercise.name),
+      equipment: history.mostCommonEquipment || [...new Set(recentExercises.map(exercise => exercise.equipment))].slice(0, 2).join(' · ') || 'Ingen data',
     }
   })
   const fatigueScore = recovery.overallFatigue
@@ -64,7 +65,7 @@ export function buildBodyDashboardModel({ workouts = [], liveSession = null, exe
     focus: coach.decision === 'recovery' ? 'Återhämtningsdag' : focusNames.join(' + ') || recommendationLabels[coach.recommendation] || 'Återhämtningsdag',
     focusMuscles: coach.focusMuscles,
     recovery: { readiness: recovery.overallReadiness, recoveryScore: recovery.overallReadiness, fatigueScore, intensity: intensityLabels[coach.sessionIntensity] || coach.sessionIntensity, duration: coach.estimatedDuration, trainingStreak, restDays },
-    coach: { ...coach, message: buildCoachMessage(muscles, coach) },
+    coach: { ...coach, message: buildCoachMessage(muscles, coach), explanation: explainCoachDecision(coach, 'sv') },
     volume: { highest: sortVolumeSummary(muscles, 'highest').slice(0, 3), lowest: sortVolumeSummary(muscles, 'lowest').slice(0, 3), balanced: muscles.filter(muscle => muscle.trainingZone === 'productive') },
     hasHistory: sessions.some(session => session.exercises?.some(exercise => exercise.sets?.length)),
   }
