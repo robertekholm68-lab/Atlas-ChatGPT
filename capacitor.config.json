@@ -1,6 +1,6 @@
 {
-  "appId": "se.askr.app",
-  "appName": "ASKR",
+  "appId": "se.askr.app.alpha2",
+  "appName": "ASKR Alpha 2",
   "webDir": "dist",
   "android": {
     "allowMixedContent": false,
@@ -8,6 +8,6 @@
   },
   "server": {
     "androidScheme": "https",
-    "hostname": "askr.local"
+    "hostname": "askr-alpha2.local"
   }
 }
