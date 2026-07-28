@@ -1,114 +1,68 @@
-const SIMPLE_NUMBERS = {
-  noll: 0, en: 1, ett: 1, två: 2, tre: 3, fyra: 4, fem: 5, sex: 6,
-  sju: 7, åtta: 8, nio: 9, tio: 10, elva: 11, tolv: 12, tretton: 13,
-  fjorton: 14, femton: 15, sexton: 16, sjutton: 17, arton: 18, nitton: 19,
-  tjugo: 20, trettio: 30, fyrtio: 40, femtio: 50, sextio: 60,
-  sjuttio: 70, åttio: 80, nittio: 90, hundra: 100
+import { CancelMatcher } from './parser/matchers/CancelMatcher.js'
+import { CompletionMatcher } from './parser/matchers/CompletionMatcher.js'
+import { NextSetMatcher } from './parser/matchers/NextSetMatcher.js'
+import { RepMatcher } from './parser/matchers/RepMatcher.js'
+import { RPEMatcher } from './parser/matchers/RPEMatcher.js'
+import { UnknownMatcher } from './parser/matchers/UnknownMatcher.js'
+import { WeightAdjustmentMatcher } from './parser/matchers/WeightAdjustmentMatcher.js'
+import { WeightMatcher } from './parser/matchers/WeightMatcher.js'
+import { contextWeight, normalizeTranscript } from './parser/parserUtils.js'
+
+export { parseSwedishNumber } from './parser/numberParser.js'
+
+const EMPTY_CURRENT_SET = Object.freeze({ weightKg: null, reps: null, rpe: null, completed: false })
+const EMPTY_NEXT_SET = Object.freeze({ weightKg: null, weightDeltaKg: null })
+
+function emptyResult(transcript) {
+  return { transcript: String(transcript ?? ''), intent: 'UnknownIntent', currentSet: { ...EMPTY_CURRENT_SET }, nextSet: { ...EMPTY_NEXT_SET }, confidence: 0, needsConfirmation: true, warnings: ['unrecognized_command'] }
 }
 
-const UNIT_WORD = '(?:kilo(?:gram)?|kg)'
-const REP_WORD = '(?:reps?|repetitioner?)'
-const NUMBER_TOKEN = '-?\\d+(?:[,.]\\d+)?|[a-zåäö]+(?: och (?:en|ett) halvt)?'
-
-function compactNumberWord(word) {
-  if (SIMPLE_NUMBERS[word] != null) return SIMPLE_NUMBERS[word]
-  for (const [tensWord, tens] of Object.entries(SIMPLE_NUMBERS).filter(([, value]) => value >= 20 && value < 100)) {
-    if (!word.startsWith(tensWord)) continue
-    const remainder = word.slice(tensWord.length)
-    if (SIMPLE_NUMBERS[remainder] > 0 && SIMPLE_NUMBERS[remainder] < 10) return tens + SIMPLE_NUMBERS[remainder]
-  }
-  return null
+function addValidated(target, key, value, minimum, maximum, warning, warnings) {
+  if (value == null) return
+  if (!Number.isFinite(value) || value < minimum || value > maximum) warnings.push(warning)
+  else target[key] = value
 }
 
-export function parseSwedishNumber(value) {
-  if (typeof value !== 'string') return null
-  const normalized = value.trim().toLowerCase().replace(',', '.').replace(/-/g, ' ')
-  if (/^-?\d+(?:\.\d+)?$/.test(normalized)) return Number(normalized)
-  const halfMatch = normalized.match(/^(.+?) och (?:en|ett) halvt$/)
-  if (halfMatch) {
-    const whole = parseSwedishNumber(halfMatch[1])
-    return whole == null ? null : whole + 0.5
-  }
-  const words = normalized.split(/\s+/)
-  if (words.length === 1) return compactNumberWord(words[0])
-  let total = 0
-  for (const word of words) {
-    const number = compactNumberWord(word)
-    if (number == null) return null
-    total += number
-  }
-  return total
-}
+export function parseSwedishWorkoutCommand(transcript, workoutContext = {}) {
+  const text = normalizeTranscript(transcript)
+  if (!text) return emptyResult(transcript)
+  const cancel = CancelMatcher.match({ text })
+  if (cancel) return { ...emptyResult(transcript), intent: 'cancel', confidence: 1, warnings: [] }
 
-const valueFrom = match => match ? parseSwedishNumber(match[1]) : null
-const firstMatch = (text, expressions) => expressions.map(expression => text.match(expression)).find(Boolean)
+  const next = NextSetMatcher.match({ text })
+  const adjustment = WeightAdjustmentMatcher.match({ text })
+  const targetsNext = Boolean(next || adjustment?.targetsNext)
+  const rpe = RPEMatcher.match({ text })
+  const weight = WeightMatcher.match({ text, context: workoutContext, targetsNext })
+  const completion = CompletionMatcher.match({ text })
+  const hasSpecializedMatch = Boolean(adjustment || rpe || weight || completion)
+  const reps = RepMatcher.match({ text, targetsNext, hasSpecializedMatch })
+  if (!hasSpecializedMatch && !reps && !next) return emptyResult(transcript)
 
-export function parseSwedishWorkoutCommand(transcript, context = {}) {
-  const text = String(transcript || '').trim().toLowerCase().replace(/[!?]/g, '').replace(/\s+/g, ' ')
   const warnings = []
-  const currentSet = { weightKg: null, reps: null, rpe: null, completed: false }
-  const nextSet = { weightKg: null, weightDeltaKg: null }
-  const targetsNext = /(?:nästa set|till nästa|nästa)$/.test(text) || /nästa set/.test(text)
-  const baseWeight = Number(context.plannedWeightKg ?? context.previousSet?.weightKg ?? context.previousSet?.kg)
+  const currentSet = { ...EMPTY_CURRENT_SET }
+  const nextSet = { ...EMPTY_NEXT_SET }
+  addValidated(currentSet, 'weightKg', weight?.weightKg, 0, 500, 'weight_out_of_range', warnings)
+  addValidated(currentSet, 'reps', reps?.reps, 0, 100, 'reps_out_of_range', warnings)
+  addValidated(currentSet, 'rpe', rpe?.rpe, 1, 10, 'rpe_out_of_range', warnings)
+  addValidated(nextSet, 'weightKg', weight?.nextWeightKg, 0, 500, 'weight_out_of_range', warnings)
+  if (adjustment?.weightDeltaKg != null) nextSet.weightDeltaKg = adjustment.weightDeltaKg
+  currentSet.completed = Boolean(completion?.completed || reps?.completed)
 
-  const rpeMatch = firstMatch(text, [new RegExp(`rpe\\s+(${NUMBER_TOKEN})`), new RegExp(`ansträngning\\s+(${NUMBER_TOKEN})`)])
-  if (rpeMatch) currentSet.rpe = valueFrom(rpeMatch)
+  const baseWeight = contextWeight(workoutContext)
+  if (currentSet.reps != null && currentSet.weightKg == null && baseWeight != null) currentSet.weightKg = baseWeight
+  const resultingNextWeight = nextSet.weightKg ?? (baseWeight != null && nextSet.weightDeltaKg != null ? baseWeight + nextSet.weightDeltaKg : null)
+  if (resultingNextWeight != null && (resultingNextWeight < 0 || resultingNextWeight > 500)) {
+    warnings.push('weight_out_of_range')
+    nextSet.weightKg = null
+    nextSet.weightDeltaKg = null
+  } else if (baseWeight != null && resultingNextWeight != null && Math.abs(resultingNextWeight - baseWeight) > Math.max(20, baseWeight * 0.3)) warnings.push('extreme_weight_change')
+  if (weight?.sameWeight && (weight.weightKg == null && weight.nextWeightKg == null)) warnings.push('missing_context_weight')
+  if (reps?.ambiguous) warnings.push('ambiguous_number')
 
-  const explicitWeight = firstMatch(text, [
-    new RegExp(`nästa set\\s+(${NUMBER_TOKEN})\\s*${UNIT_WORD}?`),
-    new RegExp(`(${NUMBER_TOKEN})\\s*${UNIT_WORD}`)
-  ])
-  const deltaMatch = firstMatch(text, [
-    new RegExp(`(?:öka|lägg på)\\s+(${NUMBER_TOKEN})(?:\\s*${UNIT_WORD})?`),
-    new RegExp(`sänk\\s+(${NUMBER_TOKEN})(?:\\s*${UNIT_WORD})?`)
-  ])
-  const decrease = /\bsänk\b/.test(text)
-  const keepWeight = /(?:samma vikt|behåll vikten)/.test(text)
-
-  if (deltaMatch) nextSet.weightDeltaKg = (decrease ? -1 : 1) * valueFrom(deltaMatch)
-  if (explicitWeight) {
-    const weight = valueFrom(explicitWeight)
-    if (targetsNext && text.includes('nästa set')) nextSet.weightKg = weight
-    else currentSet.weightKg = weight
-  } else if (keepWeight && targetsNext) {
-    nextSet.weightKg = Number.isFinite(baseWeight) ? baseWeight : null
-  } else if (keepWeight) {
-    currentSet.weightKg = Number.isFinite(baseWeight) ? baseWeight : null
-  }
-
-  const repsMatch = firstMatch(text, [
-    new RegExp(`(${NUMBER_TOKEN})\\s*${REP_WORD}`),
-    new RegExp(`(?:det blev|jag klarade)\\s+(${NUMBER_TOKEN})`)
-  ])
-  if (repsMatch) currentSet.reps = valueFrom(repsMatch)
-
-  const stripped = text
-    .replace(new RegExp(`(?:rpe|ansträngning)\\s+(?:${NUMBER_TOKEN})`, 'g'), '')
-    .replace(new RegExp(`(?:${NUMBER_TOKEN})\\s*${UNIT_WORD}`, 'g'), '')
-    .replace(/(?:samma vikt|behåll vikten|klart|set klart|markera klart)/g, '')
-    .trim()
-  if (currentSet.reps == null && !targetsNext && !deltaMatch && stripped) {
-    const onlyNumber = parseSwedishNumber(stripped.replace(/^(?:det blev|jag klarade)\s+/, ''))
-    if (onlyNumber != null) currentSet.reps = onlyNumber
-  }
-
-  const explicitComplete = /^(?:klart|set klart|markera klart)$/.test(text)
-  currentSet.completed = explicitComplete || currentSet.reps != null
-  if (currentSet.weightKg == null && currentSet.reps != null && Number.isFinite(baseWeight)) currentSet.weightKg = baseWeight
-
-  const recognized = [currentSet.weightKg, currentSet.reps, currentSet.rpe, nextSet.weightKg, nextSet.weightDeltaKg].some(value => value != null) || explicitComplete
-  const numberCount = (text.match(/\d+(?:[,.]\d+)?|\b(?:en|ett|två|tre|fyra|fem|sex|sju|åtta|nio|tio)\b/g) || []).length
-  if (!recognized) warnings.push('unrecognized_command')
-  if (numberCount > 0 && !recognized) warnings.push('ambiguous_number')
-  if (rpeMatch && currentSet.rpe == null) warnings.push('invalid_rpe')
-  if (explicitWeight && currentSet.weightKg == null && nextSet.weightKg == null) warnings.push('invalid_weight')
-
-  const intent = targetsNext || deltaMatch ? 'update_next_set' : 'log_set'
   const parsedFields = [currentSet.weightKg, currentSet.reps, currentSet.rpe, nextSet.weightKg, nextSet.weightDeltaKg].filter(value => value != null).length
-  return {
-    transcript: String(transcript || ''), intent, currentSet, nextSet,
-    confidence: recognized ? Math.min(0.98, 0.72 + parsedFields * 0.08 + (currentSet.completed ? 0.08 : 0)) : 0,
-    warnings, needsConfirmation: true
-  }
+  const intent = next && !adjustment && !weight ? 'next_set' : targetsNext ? 'update_next_set' : 'log_set'
+  return { transcript: String(transcript ?? ''), intent, currentSet, nextSet, confidence: Math.min(0.99, 0.78 + parsedFields * 0.06 + (currentSet.completed ? 0.05 : 0)), needsConfirmation: true, warnings: [...new Set(warnings)] }
 }
 
+export const workoutCommandMatchers = Object.freeze([CancelMatcher, RPEMatcher, WeightAdjustmentMatcher, WeightMatcher, RepMatcher, CompletionMatcher, NextSetMatcher, UnknownMatcher])
