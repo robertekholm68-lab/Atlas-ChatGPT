@@ -11,6 +11,6 @@ export function validateVoiceLogCommand(command, context = {}) {
   if (resultingWeight != null && (resultingWeight < 0 || resultingWeight > 500)) warnings.push('weight_out_of_range')
   if (Number.isFinite(reference) && resultingWeight != null && Math.abs(resultingWeight - reference) > Math.max(20, reference * 0.3)) warnings.push('extreme_weight_change')
   const uniqueWarnings = [...new Set(warnings)]
-  const blockingWarnings = new Set(['unrecognized_command', 'weight_out_of_range', 'reps_out_of_range', 'rpe_out_of_range', 'missing_context_weight'])
+  const blockingWarnings = new Set(['unrecognized_command', 'weight_out_of_range', 'reps_out_of_range', 'rpe_out_of_range', 'missing_context_weight', 'missing_previous_set'])
   return { ...command, warnings: uniqueWarnings, valid: command?.intent !== 'UnknownIntent' && !uniqueWarnings.some(warning => blockingWarnings.has(warning)), needsConfirmation: true }
 }

@@ -13,7 +13,18 @@ export function firstCapturedNumber(text, patterns) {
 }
 
 export function contextWeight(context) {
-  const candidates = [context.plannedWeight, context.plannedWeightKg, context.currentSet?.weightKg, context.currentSet?.kg, context.previousSet?.weightKg, context.previousSet?.kg]
+  const candidates = [context.currentSet?.weightKg, context.currentSet?.kg, context.plannedWeight, context.plannedWeightKg, context.previousSet?.weightKg, context.previousSet?.kg]
   const found = candidates.map(Number).find(Number.isFinite)
+  return found ?? null
+}
+
+export function currentWeight(context) {
+  const candidates = [context.currentSet?.weightKg, context.currentSet?.kg, context.plannedWeight, context.plannedWeightKg, context.previousSet?.weightKg, context.previousSet?.kg]
+  const found = candidates.map(Number).find(Number.isFinite)
+  return found ?? null
+}
+
+export function plannedWeight(context) {
+  const found = [context.plannedWeight, context.plannedWeightKg].map(Number).find(Number.isFinite)
   return found ?? null
 }

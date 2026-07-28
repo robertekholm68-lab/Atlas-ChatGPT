@@ -4,7 +4,7 @@ import { firstCapturedNumber } from '../parserUtils.js'
 const value = `(?<value>${SWEDISH_NUMBER_SOURCE})`
 const patterns = [
   new RegExp(`${value}\\s*(?:reps?|repetitioner?)\\b`),
-  new RegExp(`(?:det blev|jag fick(?: bara)?|jag klarade|klarade|bara|där satt|kör)\\s+${value}\\b`)
+  new RegExp(`(?:det blev|jag fick(?: bara)?|jag (?:klarade|orkade bara)|klarade|bara|där satt|kör)\\s+${value}\\b`)
 ]
 
 export const RepMatcher = Object.freeze({
