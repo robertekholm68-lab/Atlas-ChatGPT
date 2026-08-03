@@ -17,7 +17,13 @@
   --shell-radius-button: 12px;
   --shell-radius-pill: 999px;
   --shell-motion: 150ms ease-out;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .atlas-module-switch {
@@ -124,7 +130,7 @@
 }
 
 @media (max-width: 760px) {
-  .atlas-module-switch { top: calc(var(--shell-space-8) + env(safe-area-inset-top)); max-width: calc(100vw - var(--shell-space-16)); }
+  .atlas-module-switch { top: calc(var(--shell-space-8) + env(safe-area-inset-top)); width: calc(100% - var(--shell-space-16)); max-width: none; }
   .atlas-module-switch button { padding: 0 var(--shell-space-8); }
   .atlas-module-switch button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .atlas-core-status { padding: 0 var(--shell-space-8); font-size: 0; }
