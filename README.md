@@ -2,6 +2,21 @@
 
 ASKR is a premium, local-first fitness and health application. The current alpha release candidate combines workout planning and logging, deterministic coaching, body and recovery intelligence, nutrition views, progress history, and an optional cloud platform adapter.
 
+## ASKR Ride
+
+ASKR Ride is the first product built on the reusable ASKR application foundation. It is a calm, premium cycling companion rather than a separate one-off cycling architecture. Shared patterns must remain suitable for future ASKR Gym, Run, Hike, Recover, and Nutrition products.
+
+Phase 1 is intentionally limited to project structure, the shared design system, client-side routing, empty screen shells, and responsive portrait and landscape layouts. GPS, maps, backend services, AI integrations, and advanced activity functionality are explicitly deferred.
+
+The Phase 1 screen list is:
+
+- Splash and onboarding
+- Home and Discover
+- Trip detail and Navigation
+- Sessions, Active session, and Session summary
+- AI analysis, Goals, and History
+- Profile, AI Coach, and Settings
+
 ## Developer setup
 
 ### Requirements
@@ -37,6 +52,7 @@ ASKR keeps calculations outside React:
 - `src/*Model.js` modules normalize and persist feature state.
 - React screens and platforms in `src/` consume engine/model output and own presentation state only.
 - `src/theme/` is the shared design-token source for color, type, spacing, radius, border, and motion values.
+- `src/ride/` contains the ASKR Ride shell, route definitions, and reusable presentation components. It consumes the shared tokens rather than defining a product-specific theme.
 - `src/platform/` contains optional production/cloud service adapters and sync UI.
 - `public/` contains brand assets, the PWA manifest, and the offline service worker.
 - `test/` exercises engines, models, platform behavior, and server rendering of primary routes.
