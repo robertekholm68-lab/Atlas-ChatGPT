@@ -77,7 +77,7 @@ for (const transcript of ['nästa', 'nästa set', 'till nästa', 'öka nästa'])
   test(`nästa set: ${transcript}`, () => assert.equal(parse(transcript).intent, 'next_set'))
 }
 
-for (const transcript of ['avbryt', 'ångra', 'glöm det', 'inte den', 'strunta i det', 'ta bort det']) {
+for (const transcript of ['avbryt', 'glöm det', 'inte den', 'strunta i det', 'ta bort det']) {
   test(`avbryt: ${transcript}`, () => {
     const result = parse(transcript)
     assert.equal(result.intent, 'cancel')
@@ -124,9 +124,33 @@ test('samma vikt utan kontext gissas inte', () => {
 })
 
 test('alla matchers är namngivna, isolerade objekt', () => {
-  assert.deepEqual(workoutCommandMatchers.map(matcher => matcher.name), ['CancelMatcher', 'RPEMatcher', 'WeightAdjustmentMatcher', 'WeightMatcher', 'RepMatcher', 'CompletionMatcher', 'NextSetMatcher', 'UnknownMatcher'])
+  assert.deepEqual(workoutCommandMatchers.map(matcher => matcher.name), ['CancelMatcher', 'NaturalGymLanguageMatcher', 'RPEMatcher', 'WeightAdjustmentMatcher', 'WeightMatcher', 'RepMatcher', 'CompletionMatcher', 'NextSetMatcher', 'UnknownMatcher'])
   assert.ok(workoutCommandMatchers.every(matcher => typeof matcher.match === 'function'))
 })
 
 const numberCases = [['sjuttiofem', 75], ['sjuttio fem', 75], ['åttio två', 82], ['två och ett halvt', 2.5], ['2,5', 2.5], ['+5', 5], ['nia', 9]]
 for (const [input, expected] of numberCases) test(`svenskt tal: ${input}`, () => assert.equal(parseSwedishNumber(input), expected))
+
+for (const transcript of ['80 gånger 10', '80 x 10', '80 X 10', '80 på 10', '80 för 10', '80 och 10', '80, 10', '80 10', 'kör 80 gånger 10', 'jag gjorde 80 gånger 10']) {
+  test(`naturlig vikt och reps: ${transcript}`, () => {
+    const result = parse(transcript)
+    assert.deepEqual([result.currentSet.weightKg, result.currentSet.reps], [80, 10])
+    assert.equal(result.confidence, 0.96)
+  })
+}
+
+test('ensamt tal använder aktuell och planerad träningskontext', () => {
+  assert.deepEqual(parseSwedishWorkoutCommand('10', { currentSet: { weightKg: 75, reps: 8 } }).currentSet, { weightKg: 75, reps: 10, rpe: null, completed: true })
+  assert.deepEqual(parseSwedishWorkoutCommand('80', { currentSet: { weightKg: 75, reps: 8 }, plannedWeightKg: 80 }).currentSet, { weightKg: 80, reps: 8, rpe: null, completed: false })
+})
+
+test('naturliga gymfraser och säkra åtgärder känns igen', () => {
+  assert.equal(parse('jag orkade bara sex').currentSet.reps, 6)
+  assert.equal(parse('den var tung').intent, 'UnknownIntent')
+  assert.equal(parse('samma igen').intent, 'copy_previous_set')
+  assert.equal(parse('en till').intent, 'add_sets')
+  assert.equal(parse('två set till på 80').setCount, 2)
+  assert.equal(parse('missade sista').intent, 'mark_last_set_failed')
+  assert.equal(parse('ta bort sista').intent, 'remove_last_set')
+  assert.equal(parse('ångra').intent, 'undo_voice_operation')
+})

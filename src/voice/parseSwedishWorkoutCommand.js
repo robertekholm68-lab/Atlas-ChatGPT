@@ -1,6 +1,7 @@
 import { CancelMatcher } from './parser/matchers/CancelMatcher.js'
 import { CompletionMatcher } from './parser/matchers/CompletionMatcher.js'
 import { NextSetMatcher } from './parser/matchers/NextSetMatcher.js'
+import { NaturalGymLanguageMatcher } from './parser/matchers/NaturalGymLanguageMatcher.js'
 import { RepMatcher } from './parser/matchers/RepMatcher.js'
 import { RPEMatcher } from './parser/matchers/RPEMatcher.js'
 import { UnknownMatcher } from './parser/matchers/UnknownMatcher.js'
@@ -28,6 +29,12 @@ export function parseSwedishWorkoutCommand(transcript, workoutContext = {}) {
   if (!text) return emptyResult(transcript)
   const cancel = CancelMatcher.match({ text })
   if (cancel) return { ...emptyResult(transcript), intent: 'cancel', confidence: 1, warnings: [] }
+  const natural = NaturalGymLanguageMatcher.match({ text, context: workoutContext })
+  if (natural) {
+    const warnings = natural.warning ? [natural.warning] : []
+    const currentSet = { ...EMPTY_CURRENT_SET, weightKg: natural.weightKg ?? null, reps: natural.reps ?? null, rpe: natural.rpe ?? null, completed: Boolean(natural.completed) }
+    return { transcript: String(transcript ?? ''), intent: natural.intent, currentSet, nextSet: { ...EMPTY_NEXT_SET }, setCount: natural.setCount, copyPrevious: natural.copyPrevious, confidence: warnings.length ? 0.45 : 0.96, needsConfirmation: true, warnings }
+  }
 
   const next = NextSetMatcher.match({ text })
   const adjustment = WeightAdjustmentMatcher.match({ text })
@@ -47,7 +54,7 @@ export function parseSwedishWorkoutCommand(transcript, workoutContext = {}) {
   addValidated(currentSet, 'rpe', rpe?.rpe, 1, 10, 'rpe_out_of_range', warnings)
   addValidated(nextSet, 'weightKg', weight?.nextWeightKg, 0, 500, 'weight_out_of_range', warnings)
   if (adjustment?.weightDeltaKg != null) nextSet.weightDeltaKg = adjustment.weightDeltaKg
-  currentSet.completed = Boolean(completion?.completed || reps?.completed)
+  currentSet.completed = Boolean(completion?.completed || reps?.completed || (next && !adjustment && !weight))
 
   const baseWeight = contextWeight(workoutContext)
   if (currentSet.reps != null && currentSet.weightKg == null && baseWeight != null) currentSet.weightKg = baseWeight
@@ -65,4 +72,4 @@ export function parseSwedishWorkoutCommand(transcript, workoutContext = {}) {
   return { transcript: String(transcript ?? ''), intent, currentSet, nextSet, confidence: Math.min(0.99, 0.78 + parsedFields * 0.06 + (currentSet.completed ? 0.05 : 0)), needsConfirmation: true, warnings: [...new Set(warnings)] }
 }
 
-export const workoutCommandMatchers = Object.freeze([CancelMatcher, RPEMatcher, WeightAdjustmentMatcher, WeightMatcher, RepMatcher, CompletionMatcher, NextSetMatcher, UnknownMatcher])
+export const workoutCommandMatchers = Object.freeze([CancelMatcher, NaturalGymLanguageMatcher, RPEMatcher, WeightAdjustmentMatcher, WeightMatcher, RepMatcher, CompletionMatcher, NextSetMatcher, UnknownMatcher])
