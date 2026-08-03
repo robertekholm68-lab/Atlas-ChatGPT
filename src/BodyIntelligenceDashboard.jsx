@@ -29,7 +29,7 @@ export default memo(function BodyIntelligenceDashboard({ workouts, liveSession, 
     <section className="panel body-hero-panel">
       <div className="body-toolbar"><div><span className="eyebrow">Recovery command center · Body Intelligence</span><h2>Vad kan jag träna idag?</h2></div><button type="button" className="body-view-toggle" onClick={() => setView(value => value === 'front' ? 'back' : 'front')}><RotateCcw size={17}/>{view === 'front' ? 'Framsida' : 'Baksida'}</button></div>
       <div className="body-map" aria-label={`${view === 'front' ? 'Framsida' : 'Baksida'} interaktiv muskelkarta`}>
-        <div className="body-silhouette" aria-hidden="true"><i className="head"/><i className="torso"/><i className="arm left"/><i className="arm right"/><i className="leg left"/><i className="leg right"/></div>
+        <BodySilhouette view={view}/>
         {model.muscles.filter(muscle => muscle.view === view).map((muscle, index) => <button type="button" key={muscle.id} className={`body-muscle-pin pin-${index + 1} ${muscle.status} ${getBodyHighlightState(muscle.id, selectedId, model.focusMuscles)}`} onClick={() => setSelectedId(muscle.id)} aria-label={`${muscle.name}, ${statusLabels[muscle.status]}, ${muscle.recoveryPercentage} procent återhämtad`}><span>{muscle.name}</span><b>{muscle.recoveryPercentage}%</b></button>)}
       </div>
       <div className="body-legend"><button type="button" aria-expanded={legendOpen} onClick={() => setLegendOpen(value => !value)}>Teckenförklaring <ChevronDown size={16}/></button>{legendOpen && <div>{Object.entries(statusLabels).map(([id, label]) => <span key={id}><i className={id}/>{label}</span>)}</div>}</div>
@@ -40,6 +40,20 @@ export default memo(function BodyIntelligenceDashboard({ workouts, liveSession, 
     {selected && <div className="body-sheet-backdrop" onMouseDown={event => event.target === event.currentTarget && setSelectedId(null)}><section className="body-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="muscle-sheet-title"><button ref={closeRef} type="button" className="body-sheet-close" onClick={() => setSelectedId(null)} aria-label="Stäng muskeldetaljer"><X/></button><header><span className="eyebrow">Muscle intelligence</span><h2 id="muscle-sheet-title">{selected.name}</h2><span className={`body-status ${selected.status}`}>{statusLabels[selected.status]}</span></header><div className="body-sheet-score"><strong>{selected.recoveryPercentage}%</strong><span>återhämtad</span></div><dl>{[['Volym denna vecka',`${Math.round(selected.effectiveSets)} set`],['MEV / MAV / MRV',`${selected.thresholds.mev} / ${selected.thresholds.mav} / ${selected.thresholds.mrv}`],['Rekommenderade set kvar',selected.setsRemaining],['Senast tränad',selected.lastTrainedLabel],['Full återhämtning',selected.fullRecoveryLabel],['Primär utrustning',selected.equipment]].map(([term, detail]) => <div key={term}><dt>{term}</dt><dd>{detail}</dd></div>)}</dl><MuscleHistoryDetail muscle={selected} coach={model.coach}/></section></div>}
   </div>
 })
+
+
+function BodySilhouette({ view }) {
+  return <svg className="body-silhouette" viewBox="0 0 180 500" aria-hidden="true">
+    <circle className="body-silhouette-head" cx="90" cy="29" r="22"/>
+    <path className="body-silhouette-form" d="M67 57C54 61 45 69 40 82L21 158c-3 12-5 26-4 39l2 69c0 8 5 13 11 13 7 0 11-5 12-13l4-67 12-51 3 88-10 92 7 149c1 10 7 16 15 16 9 0 14-6 15-16l2-120 2-31 2 31 2 120c1 10 6 16 15 16 8 0 14-6 15-16l7-149-10-92 3-88 12 51 4 67c1 8 5 13 12 13 6 0 11-5 11-13l2-69c1-13-1-27-4-39l-19-76c-5-13-14-21-27-25l-17-5H84l-17 5Z"/>
+    <path className="body-silhouette-center" d="M90 65v263M62 151c17 8 39 8 56 0M57 236c21 11 45 11 66 0M58 328c10 5 20 8 30 8M122 328c-10 5-20 8-30 8"/>
+    {view === 'front' ? <g className="body-silhouette-details">
+      <path d="M63 91c8-7 17-10 27-10s19 3 27 10M62 100c6 23 14 36 28 39 14-3 22-16 28-39M72 157c3 15 9 25 18 30 9-5 15-15 18-30M76 202h28M73 225h34M69 342c6 4 12 6 19 6M111 342c-6 4-12 6-19 6"/>
+    </g> : <g className="body-silhouette-details">
+      <path d="M66 86c8 10 16 15 24 15s16-5 24-15M60 108c9 6 19 10 30 10s21-4 30-10M64 127c6 23 14 38 26 45 12-7 20-22 26-45M68 198c7 7 14 11 22 11s15-4 22-11M69 342c6 4 12 6 19 6M111 342c-6 4-12 6-19 6"/>
+    </g>}
+  </svg>
+}
 
 function MuscleHistoryDetail({ muscle, coach }) {
   const history = muscle.history
