@@ -26,6 +26,52 @@
   overflow-x: clip;
 }
 
+/*
+ * Content containment
+ *
+ * Every module is rendered inside this shell, but several of them use nested
+ * flex and grid layouts. Their default `min-width: auto` lets a long exercise
+ * name or translated label make the layout wider than the viewport. Keep the
+ * content flexible here so individual screens do not need duplicate fixes.
+ */
+.atlas-product-shell :where(main, section, article, aside, header, footer, nav, div, form, label) {
+  min-width: 0;
+}
+
+.atlas-product-shell :where(h1, h2, h3, h4, h5, h6, p, li, dt, dd, strong, small, span, label) {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.atlas-product-shell :where(img, svg, video, canvas) {
+  max-width: 100%;
+}
+
+.atlas-product-shell :where(input, textarea, select) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Circular metrics must keep both the value and its label inside the ring. */
+.atlas-product-shell :where(.readiness, .readiness-ring, .score-ring, .program-orbit, .atlas-progress-ring, .readiness-orb, .macro-donut) {
+  container-type: inline-size;
+  overflow: hidden;
+  padding: var(--shell-space-12);
+}
+
+.atlas-product-shell :where(.readiness, .readiness-ring, .score-ring, .program-orbit, .atlas-progress-ring, .readiness-orb, .macro-donut) > * {
+  max-width: 100%;
+  line-height: 1.15;
+  overflow-wrap: normal;
+  text-align: center;
+}
+
+.atlas-product-shell :where(.readiness, .readiness-ring, .score-ring, .program-orbit, .atlas-progress-ring, .readiness-orb, .macro-donut) > :not(strong) {
+  font-size: clamp(10px, 11cqi, 12px);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
 .atlas-module-switch {
   position: fixed;
   z-index: 1000;
