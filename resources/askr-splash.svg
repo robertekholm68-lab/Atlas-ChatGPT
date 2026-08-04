@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2732 2732">
+  <rect width="2732" height="2732" fill="#090B0D"/>
+  <g transform="translate(854 650)">
+    <path d="M512 80 L940 1080 H725 L635 850 H389 L299 1080 H84 L512 80 Z" fill="#D7DCE0"/>
+    <path d="M512 320 L420 690 H604 L512 320 Z" fill="#090B0D"/>
+    <path d="M512 165 L512 1025" stroke="#B6FF2E" stroke-width="54" stroke-linecap="round"/>
+  </g>
+  <text x="1366" y="1940" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="260" font-weight="700" letter-spacing="42" fill="#F2F4F5">ASKR</text>
+  <text x="1366" y="2115" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="70" letter-spacing="20" fill="#B6FF2E">TRAIN · EVOLVE · ASCEND</text>
+</svg>

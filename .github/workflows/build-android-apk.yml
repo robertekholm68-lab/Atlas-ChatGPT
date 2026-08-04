@@ -1,0 +1,117 @@
+name: Build ASKR Android APK
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - alpha/android-apk-packaging
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'server/**'
+      - 'resources/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.*'
+      - 'capacitor.config.*'
+      - '.github/workflows/build-android-apk.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install SVG renderer
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq librsvg2-bin
+
+      - name: Install dependencies
+        run: npm install --silent
+
+      - name: Run tests
+        run: npm test > /dev/null
+
+      - name: Build web app
+        run: npm run build > /dev/null
+
+      - name: Create Android project
+        id: cap_add
+        shell: bash
+        run: |
+          set +e
+          npx cap add android > cap-add.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload Capacitor diagnostics
+        if: steps.cap_add.outputs.exit_code != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: capacitor-add-diagnostics
+          path: cap-add.log
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Stop when Android project creation failed
+        if: steps.cap_add.outputs.exit_code != '0'
+        run: |
+          cat cap-add.log
+          exit 1
+
+      - name: Set Android version
+        run: |
+          sed -i 's/versionCode 1/versionCode 2/' android/app/build.gradle
+          sed -i 's/versionName "1.0"/versionName "1.0.0-alpha.2"/' android/app/build.gradle
+
+      - name: Generate branded icon and splash sources
+        run: |
+          rsvg-convert -w 1024 -h 1024 resources/askr-icon.svg > resources/icon-only.png
+          rsvg-convert -w 2732 -h 2732 resources/askr-splash.svg > resources/splash.png
+          cp resources/splash.png resources/splash-dark.png
+
+      - name: Generate Android launcher and splash assets
+        run: npx capacitor-assets generate --android
+
+      - name: Sync web assets
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Rename APK
+        run: |
+          mkdir -p release
+          cp android/app/build/outputs/apk/debug/app-debug.apk release/ASKR-Alpha-2-workout-mobile-v2.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASKR-Alpha-2-android
+          path: release/ASKR-Alpha-2-workout-mobile-v2.apk
+          if-no-files-found: error
+          retention-days: 30

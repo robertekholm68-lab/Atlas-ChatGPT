@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" rx="220" fill="#090B0D"/>
+  <rect x="34" y="34" width="956" height="956" rx="190" fill="none" stroke="#2A2F33" stroke-width="20"/>
+  <path d="M512 150 L790 795 H650 L594 650 H430 L374 795 H234 L512 150 Z" fill="#D7DCE0"/>
+  <path d="M512 304 L451 545 H573 L512 304 Z" fill="#090B0D"/>
+  <path d="M512 205 L512 765" stroke="#B6FF2E" stroke-width="34" stroke-linecap="round"/>
+  <path d="M512 265 L482 410 L512 380 L542 410 Z" fill="#D4FF5F"/>
+  <text x="512" y="900" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="112" font-weight="700" letter-spacing="20" fill="#F2F4F5">ASKR</text>
+</svg>

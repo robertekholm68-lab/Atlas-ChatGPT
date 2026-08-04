@@ -1,0 +1,13 @@
+{
+  "appId": "se.askr.app.alpha2",
+  "appName": "ASKR Alpha 2",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#0B0D0F"
+  },
+  "server": {
+    "androidScheme": "https",
+    "hostname": "askr-alpha2.local"
+  }
+}
